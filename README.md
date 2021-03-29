@@ -43,7 +43,7 @@ We suggest working on your projects in separate branches. If you do not understa
 ## Build
 
 ### Linux / Mac
-To ensure that you have the proper packages on your machine, run the following script to automatically install them:
+To ensure that you have the proper packages on your machine, run the following script to automatically install them (omit `sudo` on Mac):
 
 ```
 $ sudo build_support/packages.sh
