@@ -14,13 +14,13 @@
 main() {
   set -o errexit
 
-    if [ $1 == "-y" ] 
+    if [[ $1 == "-y" ]]
     then 
         install
     else
         echo "PACKAGES WILL BE INSTALLED. THIS MAY BREAK YOUR EXISTING TOOLCHAIN."
         echo "YOU ACCEPT ALL RESPONSIBILITY BY PROCEEDING."
-        read -p "Proceed? [Y/n] : " yn
+        read -p "Proceed? [y/N] : " yn
     
         case $yn in
             Y|y) install;;
