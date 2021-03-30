@@ -8,6 +8,8 @@
 ##
 ## Supported environments:
 ##  * Ubuntu 18.04
+##  * Ubuntu 20.04
+##  * Ubuntu 20.10
 ##  * macOS
 ## =================================================================
 
@@ -43,6 +45,7 @@ install() {
       case $version in
         18.04) install_linux ;;
         20.04) install_linux ;;
+        20.10) install_linux ;;
         *) give_up ;;
       esac
       ;;
@@ -60,6 +63,7 @@ give_up() {
   echo
   echo "https://github.com/cmu-db/bustub/issues"
   echo
+  echo "If you are in 334, contact Aaron first."
   exit 1
 }
 
@@ -67,7 +71,7 @@ install_mac() {
   # Install Homebrew.
   if test ! $(which brew); then
     echo "Installing Homebrew (https://brew.sh/)"
-    ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
   fi
   # Update Homebrew.
   brew update
