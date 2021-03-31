@@ -60,8 +60,8 @@ void TableGenerator::FillTable(TableMetadata *info, TableInsertMeta *table_meta)
       for (const auto &col : values) {
         entry.emplace_back(col[i]);
       }
-      RID rid;
-      bool inserted = info->table_->InsertTuple(Tuple(entry, &info->schema_), &rid, exec_ctx_->GetTransaction());
+      RID rid __attribute__((unused));
+      bool inserted __attribute__((unused)) = info->table_->InsertTuple(Tuple(entry, &info->schema_), &rid, exec_ctx_->GetTransaction());
       BUSTUB_ASSERT(inserted, "Sequential insertion cannot fail");
       num_inserted++;
     }
