@@ -22,7 +22,7 @@ endif ()
 # Expected directory structure.
 set(BUSTUB_BUILD_SUPPORT_DIR "${CMAKE_SOURCE_DIR}/build_support")
 set(BUSTUB_CLANG_SEARCH_PATH "/usr/local/opt/llvm@8/bin" "/usr/local/Cellar/llvm/8.0.1/bin" "/usr/local/bin" 
-        "/usr/bin" "/usr/local/opt/llvm/bin")
+        "/usr/bin" "/usr/local/opt/llvm/bin" "/opt/homebrew/opt/llvm/bin")
 
 ######################################################################################################################
 # DEPENDENCIES
@@ -77,7 +77,7 @@ add_subdirectory("${CMAKE_BINARY_DIR}/googletest-src" "${CMAKE_BINARY_DIR}/googl
 ######################################################################################################################
 
 # Compiler flags.
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -Wall -Wextra -Werror -march=native")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -Wall -Wextra -Werror")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-parameter -Wno-attributes") #TODO: remove
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -ggdb -fsanitize=address -fno-omit-frame-pointer -fno-optimize-sibling-calls")
 set(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} -fPIC")
