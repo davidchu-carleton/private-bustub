@@ -35,11 +35,13 @@ class AggregateValueExpression : public AbstractExpression {
 
   Value Evaluate(const Tuple *tuple, const Schema *schema) const override {
     BUSTUB_ASSERT(false, "Aggregation should only refer to group-by and aggregates.");
+    exit(1);
   }
 
   Value EvaluateJoin(const Tuple *left_tuple, const Schema *left_schema, const Tuple *right_tuple,
                      const Schema *right_schema) const override {
     BUSTUB_ASSERT(false, "Aggregation should only refer to group-by and aggregates.");
+    exit(1);
   }
 
   Value EvaluateAggregate(const std::vector<Value> &group_bys, const std::vector<Value> &aggregates) const override {
