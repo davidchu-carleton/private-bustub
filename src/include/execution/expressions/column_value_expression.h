@@ -41,8 +41,7 @@ class ColumnValueExpression : public AbstractExpression {
                            : right_tuple->GetValue(right_schema, col_idx_);
   }
 
-  Value EvaluateAggregate(const std::vector<Value> &group_bys, const std::vector<Value> &aggregates) const override
-       {
+  Value EvaluateAggregate(const std::vector<Value> &group_bys, const std::vector<Value> &aggregates) const override {
     BUSTUB_ASSERT(false, "Aggregation should only refer to group-by and aggregates.");
     exit(1);
   }
