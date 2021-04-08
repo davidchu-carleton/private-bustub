@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.10)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)   # For clang-tidy.
 set(BUILD_SHARED_LIBS ON)
+set(CMAKE_C_COMPILER_NAMES clang-8 clang gcc icc cc)
+set(CMAKE_CXX_COMPILER_NAMES clang++-8 clang++ g++ icpc c++ cxx)
 set(CMAKE_CXX_STANDARD 17)              # Compile as C++17
 set(CMAKE_CXX_STANDARD_REQUIRED ON)     # Require C++17 support
 
