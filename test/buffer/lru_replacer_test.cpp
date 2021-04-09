@@ -20,7 +20,7 @@
 namespace bustub {
 
 TEST(LRUReplacerTest, DISABLED_SampleTest) {
-  LRUReplacer lru_replacer(7);
+  LRUReplacer lru_replacer;
 
   // Scenario: unpin six elements, i.e. add them to the replacer.
   lru_replacer.Unpin(1);
