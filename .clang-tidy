@@ -42,6 +42,7 @@ Checks:     '
             -readability-make-member-function-const,
             -readability-qualified-auto,
             -readability-redundant-access-specifiers,
+            -bugprone-suspicious-include,
             '
 # TODO(WAN): To be enabled in Fall 2020.
 #CheckOptions:
@@ -79,3 +80,4 @@ AnalyzeTemporaryDtors: true
 # -readability-convert-member-functions-to-static, -readability-make-member-function-const, -readability-qualified-auto,
 # -readability-redundant-access-specifiers
 #    Not available on clang-8. Disable for forward compatibility with students running modern clang versions.
+# -bugprone-suspicious-include

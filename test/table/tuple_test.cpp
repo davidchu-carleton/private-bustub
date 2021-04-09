@@ -59,7 +59,7 @@ TEST(TupleTest, DISABLED_TableHeapTest) {
 
   // int i = 0;
   std::shuffle(rid_v.begin(), rid_v.end(), std::default_random_engine(0));
-  for (const auto &rid : rid_v) {
+  for (const auto &rid __attribute__((unused)) : rid_v) {
     // std::cout << i++ << std::endl;
     assert(table->MarkDelete(rid, transaction) == 1);
   }

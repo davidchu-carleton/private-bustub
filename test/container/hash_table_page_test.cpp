@@ -29,7 +29,7 @@ TEST(HashTablePageTest, DISABLED_HeaderPageSampleTest) {
 
   // get a header page from the BufferPoolManager
   page_id_t header_page_id = INVALID_PAGE_ID;
-  auto header_page = reinterpret_cast<HashTableHeaderPage *>(bpm->NewPage(&header_page_id, nullptr)->GetData());
+  auto header_page = reinterpret_cast<HashTableHeaderPage *>(bpm->NewPage(&header_page_id)->GetData());
 
   // set some fields
   for (int i = 0; i < 11; i++) {
@@ -53,7 +53,7 @@ TEST(HashTablePageTest, DISABLED_HeaderPageSampleTest) {
   }
 
   // unpin the header page now that we are done
-  bpm->UnpinPage(header_page_id, true, nullptr);
+  bpm->UnpinPage(header_page_id, true);
   disk_manager->ShutDown();
   remove("test.db");
   delete disk_manager;
@@ -69,7 +69,7 @@ TEST(HashTablePageTest, DISABLED_BlockPageSampleTest) {
   page_id_t block_page_id = INVALID_PAGE_ID;
 
   auto block_page =
-      reinterpret_cast<HashTableBlockPage<int, int, IntComparator> *>(bpm->NewPage(&block_page_id, nullptr)->GetData());
+      reinterpret_cast<HashTableBlockPage<int, int, IntComparator> *>(bpm->NewPage(&block_page_id)->GetData());
 
   // insert a few (key, value) pairs
   for (unsigned i = 0; i < 10; i++) {
@@ -104,7 +104,7 @@ TEST(HashTablePageTest, DISABLED_BlockPageSampleTest) {
   }
 
   // unpin the header page now that we are done
-  bpm->UnpinPage(block_page_id, true, nullptr);
+  bpm->UnpinPage(block_page_id, true);
   disk_manager->ShutDown();
   remove("test.db");
   delete disk_manager;

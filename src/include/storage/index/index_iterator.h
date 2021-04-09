@@ -23,8 +23,8 @@ INDEX_TEMPLATE_ARGUMENTS
 class IndexIterator {
  public:
   // you may define your own constructor based on your member variables
-  IndexIterator();
-  ~IndexIterator();
+  IndexIterator() = default;
+  ~IndexIterator() = default;
 
   bool isEnd();
 
