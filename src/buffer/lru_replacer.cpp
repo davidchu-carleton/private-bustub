@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "buffer/lru_replacer.h"
+#include <algorithm>
 
 namespace bustub {
 
@@ -21,7 +22,7 @@ LRUReplacer::~LRUReplacer() = default;
 bool LRUReplacer::Victim(frame_id_t *frame_id) { 
     if(!my_list.empty()) {
         *frame_id = my_list.front();
-        Pin(frame_id);
+        Pin(*frame_id);
         return true;
     }
     *frame_id = -1;
@@ -33,7 +34,9 @@ void LRUReplacer::Pin(frame_id_t frame_id) {
 }
 
 void LRUReplacer::Unpin(frame_id_t frame_id) {
-    my_list.push_back(frame_id);
+    if (std::find(my_list.begin(), my_list.end(), frame_id) == my_list.end()) {
+        my_list.push_back(frame_id);
+    }
 }
 
 size_t LRUReplacer::Size() { return my_list.size(); }
