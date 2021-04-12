@@ -20,7 +20,7 @@ LRUReplacer::~LRUReplacer() = default;
 
 bool LRUReplacer::Victim(frame_id_t *frame_id) { 
     if(!my_list.empty()) {
-        *frame_id = my_list.begin();
+        *frame_id = my_list.front();
         Pin(frame_id);
         return true;
     }
@@ -29,11 +29,11 @@ bool LRUReplacer::Victim(frame_id_t *frame_id) {
 }
 
 void LRUReplacer::Pin(frame_id_t frame_id) {
-
+    my_list.remove(frame_id);
 }
 
 void LRUReplacer::Unpin(frame_id_t frame_id) {
-
+    my_list.push_back(frame_id);
 }
 
 size_t LRUReplacer::Size() { return my_list.size(); }
