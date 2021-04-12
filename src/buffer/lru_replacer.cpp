@@ -33,9 +33,9 @@ void LRUReplacer::Pin(frame_id_t frame_id) {
 }
 
 void LRUReplacer::Unpin(frame_id_t frame_id) {
-    
+
 }
 
-size_t LRUReplacer::Size() { return 0; }
+size_t LRUReplacer::Size() { return my_list.size(); }
 
 }  // namespace bustub

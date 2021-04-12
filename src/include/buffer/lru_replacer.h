@@ -45,7 +45,7 @@ class LRUReplacer : public Replacer {
   size_t Size() override;
 
  private:
-  std::list my_list;
+  std::list<frame_id_t> my_list;
   
 };
 
