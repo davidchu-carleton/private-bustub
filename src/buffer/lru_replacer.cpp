@@ -18,11 +18,23 @@ LRUReplacer::LRUReplacer() = default;
 
 LRUReplacer::~LRUReplacer() = default;
 
-bool LRUReplacer::Victim(frame_id_t *frame_id) { return false; }
+bool LRUReplacer::Victim(frame_id_t *frame_id) { 
+    if(!my_list.empty()) {
+        *frame_id = my_list.begin();
+        Pin(frame_id);
+        return true;
+    }
+    *frame_id = -1;
+    return false; 
+}
 
-void LRUReplacer::Pin(frame_id_t frame_id) {}
+void LRUReplacer::Pin(frame_id_t frame_id) {
 
-void LRUReplacer::Unpin(frame_id_t frame_id) {}
+}
+
+void LRUReplacer::Unpin(frame_id_t frame_id) {
+    
+}
 
 size_t LRUReplacer::Size() { return 0; }
 
