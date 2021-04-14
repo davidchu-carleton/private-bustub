@@ -20,7 +20,7 @@ namespace bustub {
 
 // NOLINTNEXTLINE
 // Check whether pages containing terminal characters can be recovered
-TEST(BufferPoolManagerTest, DISABLED_BinaryDataTest) {
+TEST(BufferPoolManagerTest, BinaryDataTest) {
   const std::string db_name = "test.db";
   const size_t buffer_pool_size = 10;
 
@@ -110,7 +110,7 @@ void SimplePage(BufferPoolManager *bpm, int i) {
   EXPECT_TRUE(bpm->DeletePage(page_id));
 }
 
-TEST(BufferPoolManagerTest, DISABLED_SimplePageTest) {
+TEST(BufferPoolManagerTest, SimplePageTest) {
   // scenario: create a single page and check unpin, flush, fetch, and delete
   const std::string db_name = "test.db";
   const size_t buffer_pool_size = 1;
