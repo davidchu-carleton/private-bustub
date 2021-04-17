@@ -20,6 +20,7 @@ LRUReplacer::LRUReplacer() = default;
 LRUReplacer::~LRUReplacer() = default;
 
 bool LRUReplacer::Victim(frame_id_t *frame_id) { 
+    std::lock_guard<std::mutex> guardo(latch);
     if(!my_list.empty()) {
         *frame_id = my_list.front();
         Pin(*frame_id);
@@ -30,15 +31,20 @@ bool LRUReplacer::Victim(frame_id_t *frame_id) {
 }
 
 void LRUReplacer::Pin(frame_id_t frame_id) {
+    std::lock_guard<std::mutex> guardo(latch);
     my_list.remove(frame_id);
 }
 
 void LRUReplacer::Unpin(frame_id_t frame_id) {
+    std::lock_guard<std::mutex> guardo(latch);
     if (std::find(my_list.begin(), my_list.end(), frame_id) == my_list.end()) {
         my_list.push_back(frame_id);
     }
 }
 
-size_t LRUReplacer::Size() { return my_list.size(); }
+size_t LRUReplacer::Size() {
+    std::lock_guard<std::mutex> guardo(latch); 
+    return my_list.size(); 
+}
 
 }  // namespace bustub
