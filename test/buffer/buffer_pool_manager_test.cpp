@@ -130,36 +130,36 @@ TEST(BufferPoolManagerTest, SimplePageTest) {
   delete disk_manager;
 }
 
-void ConcurrentSimplePage() {
-  // scenario: 4 concurrent SimplePageTest
-  const std::string db_name = "test.db";
-  const size_t buffer_pool_size = 10;
+// void ConcurrentSimplePage() {
+//   // scenario: 4 concurrent SimplePageTest
+//   const std::string db_name = "test.db";
+//   const size_t buffer_pool_size = 10;
 
-  auto *disk_manager = new DiskManager(db_name);
-  auto *bpm = new BufferPoolManager(buffer_pool_size, disk_manager);
+//   auto *disk_manager = new DiskManager(db_name);
+//   auto *bpm = new BufferPoolManager(buffer_pool_size, disk_manager);
 
-  std::vector<std::thread> threads;
-  threads.reserve(10);
-  for (int i = 0; i < 10; i++) {
-    threads.emplace_back(std::thread(SimplePage, bpm, i));
-  }
-  for (auto &th : threads) {
-    th.join();
-  }
-  EXPECT_EQ(10, disk_manager->GetNumWrites());
+//   std::vector<std::thread> threads;
+//   threads.reserve(10);
+//   for (int i = 0; i < 10; i++) {
+//     threads.emplace_back(std::thread(SimplePage, bpm, i));
+//   }
+//   for (auto &th : threads) {
+//     th.join();
+//   }
+//   EXPECT_EQ(10, disk_manager->GetNumWrites());
 
-  // Shutdown the disk manager and remove the temporary file we created.
-  disk_manager->ShutDown();
-  remove("test.db");
+//   // Shutdown the disk manager and remove the temporary file we created.
+//   disk_manager->ShutDown();
+//   remove("test.db");
 
-  delete bpm;
-  delete disk_manager;
-}
+//   delete bpm;
+//   delete disk_manager;
+// }
 
-TEST(BufferPoolManagerTest, ConcurrentSimplePageTest) {
-  for (int i = 0; i < 100; i++) {
-    ConcurrentSimplePage();
-  }
-}
+// TEST(BufferPoolManagerTest, ConcurrentSimplePageTest) {
+//   for (int i = 0; i < 100; i++) {
+//     ConcurrentSimplePage();
+//   }
+// }
 
 }  // namespace bustub

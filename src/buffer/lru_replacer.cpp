@@ -20,10 +20,10 @@ LRUReplacer::LRUReplacer() = default;
 LRUReplacer::~LRUReplacer() = default;
 
 bool LRUReplacer::Victim(frame_id_t *frame_id) { 
-    std::lock_guard<std::mutex> guardo(latch);
+    std::lock_guard<std::mutex> guardo(this->latch);
     if(!my_list.empty()) {
         *frame_id = my_list.front();
-        Pin(*frame_id);
+        my_list.remove(*frame_id);
         return true;
     }
     *frame_id = -1;
@@ -31,19 +31,19 @@ bool LRUReplacer::Victim(frame_id_t *frame_id) {
 }
 
 void LRUReplacer::Pin(frame_id_t frame_id) {
-    std::lock_guard<std::mutex> guardo(latch);
+    std::lock_guard<std::mutex> guardo(this->latch);
     my_list.remove(frame_id);
 }
 
 void LRUReplacer::Unpin(frame_id_t frame_id) {
-    std::lock_guard<std::mutex> guardo(latch);
+    std::lock_guard<std::mutex> guardo(this->latch);
     if (std::find(my_list.begin(), my_list.end(), frame_id) == my_list.end()) {
         my_list.push_back(frame_id);
     }
 }
 
 size_t LRUReplacer::Size() {
-    std::lock_guard<std::mutex> guardo(latch); 
+    std::lock_guard<std::mutex> guardo(this->latch); 
     return my_list.size(); 
 }
 

@@ -15,7 +15,6 @@
 #include "common/config.h"
 #include <mutex>
 
-std::mutex latch;
 
 namespace bustub {
 

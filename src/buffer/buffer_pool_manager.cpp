@@ -43,7 +43,7 @@ BufferPoolManager::~BufferPoolManager() {
 }
 
 Page *BufferPoolManager::FetchPage(page_id_t page_id) {
-  std::lock_guard<std::mutex> guardo(latch);
+  std::lock_guard<std::mutex> guardo(latch_);
   // 1.     Search the page table for the requested page (P).
   // 1.1    If P exists, pin it and return it immediately.
   Page *page = nullptr;
@@ -87,7 +87,7 @@ Page *BufferPoolManager::FetchPage(page_id_t page_id) {
 
 
 bool BufferPoolManager::UnpinPage(page_id_t page_id, bool is_dirty) {
-  std::lock_guard<std::mutex> guardo(latch);
+  std::lock_guard<std::mutex> guardo(latch_);
   frame_id_t frame_id = page_table_.at(page_id);
   Page *page = &pages_[frame_id];
   if (page->pin_count_ <= 0) {
@@ -102,7 +102,7 @@ bool BufferPoolManager::UnpinPage(page_id_t page_id, bool is_dirty) {
 }
 
 bool BufferPoolManager::FlushPage(page_id_t page_id) {
-  std::lock_guard<std::mutex> guardo(latch);
+  std::lock_guard<std::mutex> guardo(latch_);
   // Make sure you call DiskManager::WritePage!
   if (page_table_.count(page_id) > 0) {
     frame_id_t frame_id = page_table_.at(page_id);
@@ -115,17 +115,14 @@ bool BufferPoolManager::FlushPage(page_id_t page_id) {
 }
 
 Page *BufferPoolManager::NewPage(page_id_t *page_id) {
-  std::lock_guard<std::mutex> guardo(latch);
+  std::lock_guard<std::mutex> guardo(latch_);
   // 0.   Make sure you call DiskManager::AllocatePage!
   *page_id = disk_manager_->AllocatePage();
 
   // 1.   If all the pages in the buffer pool are pinned, return nullptr.
-  Page *page;
-  for(auto kv : page_table_) {
-    page = &pages_[kv.second];
-    if (page->pin_count_ > 0) {
-      return nullptr;
-    }
+  Page *page = nullptr;
+  if (free_list_.empty() || replacer_->Size() == 0) {
+    return nullptr;
   }
   
   // 2.   Pick a victim page P from either the free list or the replacer. Always pick from the free list first.
@@ -142,17 +139,16 @@ Page *BufferPoolManager::NewPage(page_id_t *page_id) {
   page->page_id_ = *page_id;
   page->pin_count_ = 1;
   page->is_dirty_ = false;
-  page_table_.erase(*page_id); // necessary?
+  //page_table_.erase(*page_id); // necessary?
   page->ResetMemory(); // zero out memory??
   page_table_[*page_id] = frame_id;
 
-  // what if there is no frame_id?
   // 4.   Set the page ID output parameter. Return a pointer to P.
   return page;
 }
 
 bool BufferPoolManager::DeletePage(page_id_t page_id) {
-  std::lock_guard<std::mutex> guardo(latch);
+  std::lock_guard<std::mutex> guardo(latch_);
   // 0.   Make sure you call DiskManager::DeallocatePage!
   disk_manager_->DeallocatePage(page_id);
 
@@ -183,7 +179,7 @@ bool BufferPoolManager::DeletePage(page_id_t page_id) {
 }
 
 void BufferPoolManager::FlushAllPages() {
-  std::lock_guard<std::mutex> guardo(latch);
+  std::lock_guard<std::mutex> guardo(latch_);
   //not sure?
   page_id_t page_id;
   for(auto kv : page_table_) {
