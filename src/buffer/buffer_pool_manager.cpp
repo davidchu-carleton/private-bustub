@@ -131,7 +131,6 @@ Page *BufferPoolManager::NewPage(page_id_t *page_id) {
     frame_id = free_list_.front();
     free_list_.pop_front();
     page = &pages_[frame_id];
-    
   }
 
   // 3.   Update P's metadata, zero out memory and add P to the page table.
