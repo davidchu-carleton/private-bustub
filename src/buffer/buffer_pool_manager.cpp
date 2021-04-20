@@ -124,16 +124,17 @@ Page *BufferPoolManager::NewPage(page_id_t *page_id) {
 
   // 2.   Pick a victim page P from either the free list or the replacer. Always pick from the free list first.
   frame_id_t frame_id;
-  if (!free_list_.empty()) {
+  if (free_list_.empty()) {
+    replacer_->Victim(&frame_id);
+    page = &pages_[frame_id];
+  } else {
     frame_id = free_list_.front();
     free_list_.pop_front();
     page = &pages_[frame_id];
-  } else if (replacer_->Victim(&frame_id)) {
-    page = &pages_[frame_id];
+    
   }
 
   // 3.   Update P's metadata, zero out memory and add P to the page table.
-  // page = &pages_[frame_id];
   // replace the old page id with the new page id
   page_table_.erase(page->page_id_);
   page_table_[*page_id] = frame_id;
