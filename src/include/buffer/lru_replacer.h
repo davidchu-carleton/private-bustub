@@ -46,6 +46,7 @@ class LRUReplacer : public Replacer {
 
  private:
   std::list<frame_id_t> my_list;
+
  protected:
   mutable std::mutex latch;
 };

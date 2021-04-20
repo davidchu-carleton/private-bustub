@@ -15,8 +15,8 @@
 #include <vector>
 
 #include "buffer/lru_replacer.h"
-#include "gtest/gtest.h"
 #include "common/logger.h"
+#include "gtest/gtest.h"
 
 namespace bustub {
 
