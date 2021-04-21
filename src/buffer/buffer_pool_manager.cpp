@@ -95,7 +95,7 @@ bool BufferPoolManager::UnpinPage(page_id_t page_id, bool is_dirty) {
     return false;
   }
   page->pin_count_--;
-  if (!is_dirty) {
+  if (!page->is_dirty_) {
     page->is_dirty_ = is_dirty;
   }
   if (page->pin_count_ == 0) {
@@ -115,7 +115,6 @@ bool BufferPoolManager::FlushPage(page_id_t page_id) {
     page->is_dirty_ = false;
     return true;
   }
-
   return false;
 }
 
