@@ -84,6 +84,7 @@ Page *BufferPoolManager::FetchPage(page_id_t page_id) {
 }
 
 bool BufferPoolManager::UnpinPage(page_id_t page_id, bool is_dirty) {
+  // need to check whether page_id exists?
   std::lock_guard<std::mutex> guardo(latch_);
   frame_id_t frame_id = page_table_.at(page_id);
   Page *page = &pages_[frame_id];
@@ -107,6 +108,7 @@ bool BufferPoolManager::FlushPage(page_id_t page_id) {
   if (page_table_.count(page_id) > 0) {
     frame_id_t frame_id = page_table_.at(page_id);
     Page *page = &pages_[frame_id];
+    // check whether page->page_id_ is invalid?
     disk_manager_->WritePage(page_id, page->data_);
     page->is_dirty_ = false;
     return true;
@@ -174,6 +176,7 @@ bool BufferPoolManager::DeletePage(page_id_t page_id) {
 
   // 3.   Otherwise, P can be deleted. Remove P from the page table, reset its metadata and return it to the free list.
   page_table_.erase(page_id);
+  replacer_->Pin(page_id);
   page->pin_count_ = 0;
   page->page_id_ = INVALID_PAGE_ID;
   page->is_dirty_ = false;
