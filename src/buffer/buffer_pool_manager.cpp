@@ -14,7 +14,7 @@
 
 #include <algorithm>
 #include <list>
-#include <mutex> // NOLINT
+#include <mutex>  // NOLINT
 #include <unordered_map>
 #include <vector>
 
@@ -87,6 +87,9 @@ bool BufferPoolManager::UnpinPage(page_id_t page_id, bool is_dirty) {
   std::lock_guard<std::mutex> guardo(latch_);
   frame_id_t frame_id = page_table_.at(page_id);
   Page *page = &pages_[frame_id];
+  if (page == nullptr) {
+    return false;
+  }
   if (page->pin_count_ <= 0) {
     return false;
   }
@@ -105,6 +108,7 @@ bool BufferPoolManager::FlushPage(page_id_t page_id) {
     frame_id_t frame_id = page_table_.at(page_id);
     Page *page = &pages_[frame_id];
     disk_manager_->WritePage(page_id, page->data_);
+    page->is_dirty_ = false;
     return true;
   }
 
@@ -135,6 +139,9 @@ Page *BufferPoolManager::NewPage(page_id_t *page_id) {
 
   // 3.   Update P's metadata, zero out memory and add P to the page table.
   // replace the old page id with the new page id
+  if (page->is_dirty_) {
+    disk_manager_->WritePage(page->page_id_, page->data_);
+  }
   page_table_.erase(page->page_id_);
   page_table_[*page_id] = frame_id;
   // update P's meta data
