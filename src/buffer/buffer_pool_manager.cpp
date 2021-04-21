@@ -95,7 +95,9 @@ bool BufferPoolManager::UnpinPage(page_id_t page_id, bool is_dirty) {
     return false;
   }
   page->pin_count_--;
-  page->is_dirty_ = is_dirty;
+  if (!is_dirty) {
+    page->is_dirty_ = is_dirty;
+  }
   if (page->pin_count_ == 0) {
     replacer_->Unpin(frame_id);
   }
@@ -176,7 +178,7 @@ bool BufferPoolManager::DeletePage(page_id_t page_id) {
 
   // 3.   Otherwise, P can be deleted. Remove P from the page table, reset its metadata and return it to the free list.
   page_table_.erase(page_id);
-  replacer_->Pin(page_id);
+  replacer_->Pin(frame_id);
   page->pin_count_ = 0;
   page->page_id_ = INVALID_PAGE_ID;
   page->is_dirty_ = false;
@@ -190,7 +192,13 @@ void BufferPoolManager::FlushAllPages() {
   page_id_t page_id;
   for (auto kv : page_table_) {
     page_id = kv.first;
-    FlushPage(page_id);
+    if (page_table_.count(page_id) > 0) {
+      frame_id_t frame_id = page_table_.at(page_id);
+      Page *page = &pages_[frame_id];
+      // check whether page->page_id_ is invalid?
+      disk_manager_->WritePage(page_id, page->data_);
+      page->is_dirty_ = false;
+    }
   }
 }
 
