@@ -24,7 +24,7 @@ namespace bustub {
 /**
  * Store indexed key and record id(record id = page id combined with slot id,
  * see include/common/rid.h for detailed implementation) together within leaf
- * page. Only support unique key.
+ * page. Only supports unique keys.
  *
  * Leaf page format (keys are stored in order):
  *  ----------------------------------------------------------------------
@@ -45,6 +45,7 @@ class BPlusTreeLeafPage : public BPlusTreePage {
   // After creating a new leaf page from buffer pool, must call initialize
   // method to set default values
   void Init(page_id_t page_id, page_id_t parent_id = INVALID_PAGE_ID, int max_size = LEAF_PAGE_SIZE);
+
   // helper methods
   page_id_t GetNextPageId() const;
   void SetNextPageId(page_id_t next_page_id);
@@ -55,7 +56,7 @@ class BPlusTreeLeafPage : public BPlusTreePage {
   // insert and delete methods
   int Insert(const KeyType &key, const ValueType &value, const KeyComparator &comparator);
   bool Lookup(const KeyType &key, ValueType *value, const KeyComparator &comparator) const;
-  int RemoveAndDeleteRecord(const KeyType &key, const KeyComparator &comparator);
+  int Remove(const KeyType &key, const KeyComparator &comparator);
 
   // Split and Merge utility methods
   void MoveHalfTo(BPlusTreeLeafPage *recipient);

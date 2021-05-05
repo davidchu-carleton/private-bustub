@@ -60,7 +60,7 @@ class BPlusTree {
   INDEXITERATOR_TYPE end();
 
   void Print(BufferPoolManager *bpm) {
-    ToString(reinterpret_cast<BPlusTreePage *>(bpm->FetchPage(root_page_id_)->GetData()), bpm);
+    std::cout << ToString(reinterpret_cast<BPlusTreePage *>(bpm->FetchPage(root_page_id_)->GetData()), bpm);
   }
 
   void Draw(BufferPoolManager *bpm, const std::string &outf) {
@@ -76,10 +76,13 @@ class BPlusTree {
 
   // read data from file and remove one by one
   void RemoveFromFile(const std::string &file_name, Transaction *transaction = nullptr);
-  // expose for test purpose
-  Page *FindLeafPage(const KeyType &key, bool leftMost = false);
 
  private:
+  Page *FindLeafPage(const KeyType &key, bool leftMost = false);
+
+  BPlusTreePage *FindLeafForWrite(const KeyType &key, Transaction *transaction,
+                                  const std::function<bool(BPlusTreePage *)> &safe_p);
+
   void StartNewTree(const KeyType &key, const ValueType &value);
 
   bool InsertIntoLeaf(const KeyType &key, const ValueType &value, Transaction *transaction = nullptr);
@@ -87,27 +90,24 @@ class BPlusTree {
   void InsertIntoParent(BPlusTreePage *old_node, const KeyType &key, BPlusTreePage *new_node,
                         Transaction *transaction = nullptr);
 
-  template <typename N>
-  N *Split(N *node);
+  void CreateNewRoot(BPlusTreePage *old_node, const KeyType &key, BPlusTreePage *new_node);
 
-  template <typename N>
-  bool CoalesceOrRedistribute(N *node, Transaction *transaction = nullptr);
+  BPlusTreePage *Split(BPlusTreePage *node);
 
-  template <typename N>
-  bool Coalesce(N **neighbor_node, N **node, BPlusTreeInternalPage<KeyType, page_id_t, KeyComparator> **parent,
-                int index, Transaction *transaction = nullptr);
+  void CoalesceOrRedistribute(BPlusTreePage *node, Transaction *transaction = nullptr);
 
-  template <typename N>
-  void Redistribute(N *neighbor_node, N *node, int index);
+  void Coalesce(BPlusTreePage *sibling, BPlusTreePage *node, InternalPage *parent, int index, Transaction *transaction);
 
-  bool AdjustRoot(BPlusTreePage *node);
+  void Redistribute(BPlusTreePage *sibling, BPlusTreePage *node, InternalPage *parent, int index);
 
-  void UpdateRootPageId(int insert_record = 0);
+  void AdjustRoot(BPlusTreePage *node);
+
+  void UpdateRootPageId(bool insert_record = false);
 
   /* Debug Routines for FREE!! */
   void ToGraph(BPlusTreePage *page, BufferPoolManager *bpm, std::ofstream &out) const;
 
-  void ToString(BPlusTreePage *page, BufferPoolManager *bpm) const;
+  std::string ToString(BPlusTreePage *page, BufferPoolManager *bpm) const;
 
   // member variable
   std::string index_name_;
