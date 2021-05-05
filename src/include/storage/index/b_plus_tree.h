@@ -80,17 +80,12 @@ class BPlusTree {
  private:
   Page *FindLeafPage(const KeyType &key, bool leftMost = false);
 
-  BPlusTreePage *FindLeafForWrite(const KeyType &key, Transaction *transaction,
-                                  const std::function<bool(BPlusTreePage *)> &safe_p);
-
   void StartNewTree(const KeyType &key, const ValueType &value);
 
   bool InsertIntoLeaf(const KeyType &key, const ValueType &value, Transaction *transaction = nullptr);
 
   void InsertIntoParent(BPlusTreePage *old_node, const KeyType &key, BPlusTreePage *new_node,
                         Transaction *transaction = nullptr);
-
-  void CreateNewRoot(BPlusTreePage *old_node, const KeyType &key, BPlusTreePage *new_node);
 
   BPlusTreePage *Split(BPlusTreePage *node);
 
