@@ -47,7 +47,7 @@ TEST(LRUReplacerTest, DISABLED_SampleTest) {
   lru_replacer.Pin(4);
   EXPECT_EQ(2, lru_replacer.Size());
 
-  // Scenario: unpin 4. We expect that it will be the most recently used of the available frames.
+  // Scenario: unpin 4. We expect that the reference bit of 4 will be set to 1.
   lru_replacer.Unpin(4);
 
   // Scenario: continue looking for victims. We expect these victims.

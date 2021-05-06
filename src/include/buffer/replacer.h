@@ -26,7 +26,7 @@ class Replacer {
 
   /**
    * Remove the victim frame as defined by the replacement policy.
-   * @param[out] frame_id id of frame that was removed, -1 if no victim was found
+   * @param[out] frame_id id of frame that was removed, nullptr if no victim was found
    * @return true if a victim frame was found, false otherwise
    */
   virtual bool Victim(frame_id_t *frame_id) = 0;

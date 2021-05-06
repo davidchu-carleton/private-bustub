@@ -10,11 +10,10 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "buffer/buffer_pool_manager.h"
+
 #include <list>
 #include <unordered_map>
-
-#include "buffer/buffer_pool_manager.h"
-#include "common/logger.h"
 
 namespace bustub {
 
