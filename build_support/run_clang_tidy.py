@@ -316,6 +316,8 @@ def main():
                     if file_name_re.search(name):
                         task_queue.put(name, block=True, timeout=300)
                         put_file = True
+                    else:
+                        break
                     # update_progress(i, len(files))
                 except queue.Full:
                     print('Still waiting to put files into clang-tidy queue.')
