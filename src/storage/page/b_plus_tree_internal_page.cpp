@@ -173,7 +173,7 @@ void B_PLUS_TREE_INTERNAL_PAGE_TYPE::CopyNFrom(MappingType *items, int size, Buf
     child_node->SetParentPageId(GetPageId());
     buffer_pool_manager->UnpinPage(child_node->GetPageId(), true);
   }
-  IncreaseSize(size-1);
+  IncreaseSize(size);
 }
 
 /*****************************************************************************
