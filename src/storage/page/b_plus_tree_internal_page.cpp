@@ -94,7 +94,7 @@ ValueType B_PLUS_TREE_INTERNAL_PAGE_TYPE::Lookup(const KeyType &key, const KeyCo
   }
 
   for(int i = 1; i < GetSize(); i++){
-    if(comparator(key, array[i].first) <= 0){
+    if(comparator(key, array[i].first) < 0){
       return array[i-1].second;
     }
   }
