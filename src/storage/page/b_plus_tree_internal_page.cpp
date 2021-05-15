@@ -27,7 +27,7 @@ namespace bustub {
 INDEX_TEMPLATE_ARGUMENTS
 void B_PLUS_TREE_INTERNAL_PAGE_TYPE::Init(page_id_t page_id, page_id_t parent_id, int max_size) {
   SetPageType(IndexPageType::INTERNAL_PAGE);
-  SetSize(0);
+  SetSize(1);
   SetPageId(page_id);
   SetParentPageId(parent_id);
   SetMaxSize(max_size);
@@ -119,7 +119,7 @@ void B_PLUS_TREE_INTERNAL_PAGE_TYPE::PopulateNewRoot(const ValueType &old_value,
                                                      const ValueType &new_value) {
   array[0].second = old_value;
   array[1] = std::make_pair(new_key, new_value);
-  IncreaseSize(1);
+  IncreaseSize(2);
 }
 /*
  * Insert new_key & new_value pair right after the pair with its value == old_value
