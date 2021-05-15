@@ -100,7 +100,7 @@ bool B_PLUS_TREE_LEAF_PAGE_TYPE::Lookup(const KeyType &key, ValueType *value, co
     return false;
   }
   int key_index = KeyIndex(key, comparator);
-  if(comparator(array[key_index].first, key)==0){
+  if(comparator(array[key_index].first, key) == 0){
     *value = array[key_index].second;
     return true;
   }
@@ -116,7 +116,23 @@ bool B_PLUS_TREE_LEAF_PAGE_TYPE::Lookup(const KeyType &key, ValueType *value, co
  */
 INDEX_TEMPLATE_ARGUMENTS
 int B_PLUS_TREE_LEAF_PAGE_TYPE::Insert(const KeyType &key, const ValueType &value, const KeyComparator &comparator) {
-  return 0;
+  // Do not need to split here
+  int size = GetSize();
+  MappingType new_pair = std::make_pair(key, value);
+  // bigger than the last one
+  if (size == 0 || comparator(key, array[size-1].first) > 0){
+    array[size] = new_pair;
+  } else if (comparator(key, array[0].first) < 0){ // less than the first one
+    memmove(array + 1, array, static_cast<size_t>(GetSize()*sizeof(MappingType)));
+    array[0] = new_pair;
+  } else { 
+    // in the middle of array
+    int new_index = KeyIndex(key, comparator);
+    memmove(array + new_index + 1, array + new_index, static_cast<size_t>((GetSize() - new_index) * sizeof(MappingType)));
+    array[new_index] = new_pair;
+  }
+  IncreaseSize(1);
+  return size + 1;
 }
 
 /*****************************************************************************
@@ -128,14 +144,21 @@ int B_PLUS_TREE_LEAF_PAGE_TYPE::Insert(const KeyType &key, const ValueType &valu
  *       and call MoveHalfTo accordingly in b_plus_tree.cpp.
  */
 INDEX_TEMPLATE_ARGUMENTS
-void B_PLUS_TREE_LEAF_PAGE_TYPE::MoveHalfTo(BPlusTreeLeafPage *recipient) {}
+void B_PLUS_TREE_LEAF_PAGE_TYPE::MoveHalfTo(BPlusTreeLeafPage *recipient) {
+  int half = (GetSize() + 1)/2;
+  recipient->CopyNFrom(array + GetSize() - half, half);
+  IncreaseSize(-1 * half);
+}
 
 /*
  * Private helper method for MoveHalfTo.
  * Copy starting from items, and copy {size} number of elements into me.
  */
 INDEX_TEMPLATE_ARGUMENTS
-void B_PLUS_TREE_LEAF_PAGE_TYPE::CopyNFrom(MappingType *items, int size) {}
+void B_PLUS_TREE_LEAF_PAGE_TYPE::CopyNFrom(MappingType *items, int size) {
+  memcpy(array, items, size * sizeof(MappingType));
+  IncreaseSize(size);
+}
 
 /*****************************************************************************
  * REMOVE
@@ -147,7 +170,21 @@ void B_PLUS_TREE_LEAF_PAGE_TYPE::CopyNFrom(MappingType *items, int size) {}
  * @return   page size after deletion
  */
 INDEX_TEMPLATE_ARGUMENTS
-int B_PLUS_TREE_LEAF_PAGE_TYPE::Remove(const KeyType &key, const KeyComparator &comparator) { return 0; }
+int B_PLUS_TREE_LEAF_PAGE_TYPE::Remove(const KeyType &key, const KeyComparator &comparator) { 
+  int size = GetSize();
+  if(size == 0 || comparator(key, KeyAt(0)) < 0 || comparator(key, KeyAt(size-1)) > 0){
+    return size;
+  }
+
+  int key_index = KeyIndex(key, comparator);
+  if (comparator(key, KeyAt(key_index)) == 0) {
+    memmove(array + key_index, array + key_index + 1, (size - key_index - 1) * sizeof(MappingType));
+    IncreaseSize(-1);
+    size--;
+  }
+
+  return size;
+}
 
 /*****************************************************************************
  * MERGE
@@ -157,7 +194,20 @@ int B_PLUS_TREE_LEAF_PAGE_TYPE::Remove(const KeyType &key, const KeyComparator &
  * to update the next_page id in the sibling page
  */
 INDEX_TEMPLATE_ARGUMENTS
-void B_PLUS_TREE_LEAF_PAGE_TYPE::MoveAllTo(BPlusTreeLeafPage *recipient) {}
+void B_PLUS_TREE_LEAF_PAGE_TYPE::MoveAllTo(BPlusTreeLeafPage *recipient) {
+  recipient->CopyAllFrom(array, GetSize());
+  recipient->SetNextPageId(GetNextPageId());
+  SetSize(0);
+}
+
+/*
+ * Copy all key & value pairs from items to me
+ */
+INDEX_TEMPLATE_ARGUMENTS
+void B_PLUS_TREE_LEAF_PAGE_TYPE::CopyAllFrom(MappingType *items, int size) {
+    memcpy(array + GetSize(), items, size * sizeof(MappingType));
+    IncreaseSize(size);
+}
 
 /*****************************************************************************
  * REDISTRIBUTE
