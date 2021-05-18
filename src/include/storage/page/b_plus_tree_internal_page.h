@@ -20,9 +20,9 @@ namespace bustub {
 #define INTERNAL_PAGE_HEADER_SIZE 24
 #define INTERNAL_PAGE_SIZE ((PAGE_SIZE - INTERNAL_PAGE_HEADER_SIZE) / (sizeof(MappingType)))
 /**
- * Store n indexed keys and n+1 child pointers (page_id) within internal page.
+ * Store size_-1 indexed keys and size_ child pointers (page ids) within internal page.
  * Pointer PAGE_ID(i) points to a subtree in which all keys K satisfy:
- * K(i) <= K < K(i+1).
+ * K(i) < K <= K(i+1).
  * NOTE: since the number of keys does not equal to number of child pointers,
  * the first key always remains invalid. That is to say, any search/lookup
  * should ignore the first key.
@@ -35,7 +35,7 @@ namespace bustub {
 INDEX_TEMPLATE_ARGUMENTS
 class BPlusTreeInternalPage : public BPlusTreePage {
  public:
-  // must call initialize method after "create" a new node
+  // must call Init method after creating a new node (i.e., after allocated a new page with the buffer pool)
   void Init(page_id_t page_id, page_id_t parent_id = INVALID_PAGE_ID, int max_size = INTERNAL_PAGE_SIZE);
 
   KeyType KeyAt(int index) const;
@@ -46,8 +46,7 @@ class BPlusTreeInternalPage : public BPlusTreePage {
   ValueType Lookup(const KeyType &key, const KeyComparator &comparator) const;
   void PopulateNewRoot(const ValueType &old_value, const KeyType &new_key, const ValueType &new_value);
   int InsertNodeAfter(const ValueType &old_value, const KeyType &new_key, const ValueType &new_value);
-  void Remove(int index);
-  ValueType RemoveAndReturnOnlyChild();
+  int Remove(int index);
 
   // Split and Merge utility methods
   void MoveAllTo(BPlusTreeInternalPage *recipient, const KeyType &middle_key, BufferPoolManager *buffer_pool_manager);

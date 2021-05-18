@@ -25,10 +25,19 @@ INDEX_TEMPLATE_ARGUMENTS
 bool INDEXITERATOR_TYPE::isEnd() { throw std::runtime_error("unimplemented"); }
 
 INDEX_TEMPLATE_ARGUMENTS
+bool INDEXITERATOR_TYPE::operator==(const IndexIterator &itr) const { throw std::runtime_error("unimplemented"); }
+
+INDEX_TEMPLATE_ARGUMENTS
+bool INDEXITERATOR_TYPE::operator!=(const IndexIterator &itr) const { throw std::runtime_error("unimplemented"); }
+
+INDEX_TEMPLATE_ARGUMENTS
 const MappingType &INDEXITERATOR_TYPE::operator*() { throw std::runtime_error("unimplemented"); }
 
 INDEX_TEMPLATE_ARGUMENTS
-INDEXITERATOR_TYPE &INDEXITERATOR_TYPE::operator++() { throw std::runtime_error("unimplemented"); }
+INDEXITERATOR_TYPE &INDEXITERATOR_TYPE::operator++() {
+  throw std::runtime_error("unimplemented");
+  return *this;
+}
 
 template class IndexIterator<GenericKey<4>, RID, GenericComparator<4>>;
 
