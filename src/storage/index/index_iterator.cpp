@@ -11,31 +11,72 @@ namespace bustub {
  * NOTE: you can change the destructor/constructor method here
  * set your own input parameters
  */
-// INDEX_TEMPLATE_ARGUMENTS
-// INDEXITERATOR_TYPE::IndexIterator() {
-
-// }
-
-// INDEX_TEMPLATE_ARGUMENTS
-// INDEXITERATOR_TYPE::~IndexIterator() {
-
-// }
+INDEX_TEMPLATE_ARGUMENTS
+INDEXITERATOR_TYPE::IndexIterator(page_id_t page_id, int index, BufferPoolManager* buffer_pool_manager) : 
+page_id_(page_id), index_(index), buffer_pool_manager_(buffer_pool_manager) {
+    auto leaf_page = buffer_pool_manager_->FetchPage(page_id_);
+    leaf_node_ = reinterpret_cast<B_PLUS_TREE_LEAF_PAGE_TYPE *>(leaf_page->GetData());
+}
 
 INDEX_TEMPLATE_ARGUMENTS
-bool INDEXITERATOR_TYPE::isEnd() { throw std::runtime_error("unimplemented"); }
+INDEXITERATOR_TYPE::~IndexIterator() {
+    buffer_pool_manager_->UnpinPage(page_id_, false);
+}
 
 INDEX_TEMPLATE_ARGUMENTS
-bool INDEXITERATOR_TYPE::operator==(const IndexIterator &itr) const { throw std::runtime_error("unimplemented"); }
+bool INDEXITERATOR_TYPE::isEnd() { 
+  auto next_id = leaf_node_->GetNextPageId();
+  return (leaf_node_ == nullptr || (index_ >= leaf_node_->GetSize() && next_id == INVALID_PAGE_ID));
+}
 
 INDEX_TEMPLATE_ARGUMENTS
-bool INDEXITERATOR_TYPE::operator!=(const IndexIterator &itr) const { throw std::runtime_error("unimplemented"); }
+bool INDEXITERATOR_TYPE::operator==(const IndexIterator &itr) const { 
+  bool res = (index_ == itr.index_) && (page_id_ == itr.page_id_);
+  return res;
+ }
 
 INDEX_TEMPLATE_ARGUMENTS
-const MappingType &INDEXITERATOR_TYPE::operator*() { throw std::runtime_error("unimplemented"); }
+bool INDEXITERATOR_TYPE::operator!=(const IndexIterator &itr) const { 
+  bool res = (index_ == itr.index_) || (page_id_ == itr.page_id_);
+  return res;
+}
+
+INDEX_TEMPLATE_ARGUMENTS
+const MappingType &INDEXITERATOR_TYPE::operator*() { 
+  if(isEnd()){
+    throw std::out_of_range("Index_Iterator : out of range");
+  }
+  return leaf_node_->GetItem(index_);
+}
 
 INDEX_TEMPLATE_ARGUMENTS
 INDEXITERATOR_TYPE &INDEXITERATOR_TYPE::operator++() {
-  throw std::runtime_error("unimplemented");
+  index_++;
+  if (index_ == leaf_node_->GetSize() && leaf_node_->GetNextPageId() != INVALID_PAGE_ID) {
+    page_id_t next_page_id = leaf_node_->GetNextPageId();
+
+    auto *page = buffer_pool_manager_->FetchPage(next_page_id);
+    if(page == nullptr){
+      throw Exception(EXCEPTION_TYPE_INDEX, "all pageS are pinned")
+    }
+    page->RLatch();
+    buffer_pool_manager_->FetchPage(leaf_node_->GetPageId))->RUnlatch();
+    buffer_pool_manager_->UnpinPage(leaf_node_->GetPageId), false;
+    buffer_pool_manager_->UnpinPage(leaf_node_->GetPageId, false);
+
+    auto next_leaf_node_ = reinterpret_cast<B_PLUS_TREE_LEAF_PAGE_TYPE *>(page->GetData());
+    assert(next_leaf_node_->IsLeafPage());
+    index_ = 0;
+    leaf_node_ = next_leaf_node_;
+
+    //if (next_page_id != INVALID_PAGE_ID) {
+      //buffer_pool_manager_->UnpinPage(page_id_, false);
+      //auto page = buffer_pool_manager_->FetchPage(next_page_id);
+      //leaf_node_ = reinterpret_cast<B_PLUS_TREE_LEAF_PAGE_TYPE *>(page->GetData());
+      //index_ = 0;
+      //page_id_ = next_page_id;
+    //}
+  }
   return *this;
 }
 

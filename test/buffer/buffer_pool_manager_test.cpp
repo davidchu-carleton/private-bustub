@@ -20,7 +20,7 @@ namespace bustub {
 
 // NOLINTNEXTLINE
 // Check whether pages containing terminal characters can be recovered
-TEST(BufferPoolManagerTest, DISABLED_BinaryDataTest) {
+TEST(BufferPoolManagerTest, BinaryDataTest) {
   const std::string db_name = "test.db";
   const size_t buffer_pool_size = 10;
 
@@ -110,7 +110,7 @@ void SimplePage(BufferPoolManager *bpm, int i) {
   EXPECT_TRUE(bpm->DeletePage(page_id));
 }
 
-TEST(BufferPoolManagerTest, DISABLED_SimplePageTest) {
+TEST(BufferPoolManagerTest, SimplePageTest) {
   // scenario: create a single page and check unpin, flush, fetch, and delete
   const std::string db_name = "test.db";
   const size_t buffer_pool_size = 1;
@@ -127,6 +127,38 @@ TEST(BufferPoolManagerTest, DISABLED_SimplePageTest) {
 
   delete bpm;
   delete disk_manager;
+}
+
+void ConcurrentSimplePage() {
+  // scenario: 4 concurrent SimplePageTest
+  const std::string db_name = "test.db";
+  const size_t buffer_pool_size = 10;
+
+  auto *disk_manager = new DiskManager(db_name);
+  auto *bpm = new BufferPoolManager(buffer_pool_size, disk_manager);
+
+  std::vector<std::thread> threads;
+  threads.reserve(10);
+  for (int i = 0; i < 10; i++) {
+    threads.emplace_back(std::thread(SimplePage, bpm, i));
+  }
+  for (auto &th : threads) {
+    th.join();
+  }
+  EXPECT_EQ(10, disk_manager->GetNumWrites());
+
+  // Shutdown the disk manager and remove the temporary file we created.
+  disk_manager->ShutDown();
+  remove("test.db");
+
+  delete bpm;
+  delete disk_manager;
+}
+
+TEST(BufferPoolManagerTest, ConcurrentSimplePageTest) {
+  for (int i = 0; i < 100; i++) {
+    ConcurrentSimplePage();
+  }
 }
 
 }  // namespace bustub
