@@ -45,7 +45,8 @@ class LRUReplacer : public Replacer {
   size_t Size() override;
 
  private:
-  // TODO(student): implement me!
+  std::list<frame_id_t> my_list;
+  
 };
 
 }  // namespace bustub

@@ -12,8 +12,13 @@
 
 #pragma once
 
+#include <iostream>
 #include <memory>
 #include <utility>
+<<<<<<< HEAD
+=======
+
+>>>>>>> b9de15364ba6ead2b5d77e96d7b17730c13c3d5f
 
 namespace bustub {
 
@@ -103,11 +108,15 @@ class RowMatrixOperations {
   // Return nullptr if dimensions mismatch for input matrices.
   static std::unique_ptr<RowMatrix<T>> AddMatrices(std::unique_ptr<RowMatrix<T>> mat1,
                                                    std::unique_ptr<RowMatrix<T>> mat2) {
+<<<<<<< HEAD
     // TODO(P0): Add code
+=======
+>>>>>>> b9de15364ba6ead2b5d77e96d7b17730c13c3d5f
     int rows_1 = mat1->GetRows();
     int rows_2 = mat2->GetRows();
     int cols_1 = mat1->GetColumns();
     int cols_2 = mat2->GetColumns();
+<<<<<<< HEAD
     std::unique_ptr<RowMatrix<int>> result{new RowMatrix<int>(rows_1, cols_1)};
 
     if (rows_1 != rows_2 || cols_1 != cols_2) {
@@ -120,6 +129,21 @@ class RowMatrixOperations {
         result->SetElem(i, j, val);
       }
     }
+=======
+
+    if (rows_1 != rows_2 || cols_1 != cols_2) {
+      return nullptr;
+    }
+
+    std::unique_ptr<RowMatrix<T>> result{new RowMatrix<T>(rows_1, cols_1)};
+    for (int i = 0; i < rows_1; i++) {
+      for (int j = 0; j < cols_1; j++) {
+        int val = mat1->GetElem(i, j) + mat2->GetElem(i, j);
+        result->SetElem(i, j, val);
+      }
+    }
+
+>>>>>>> b9de15364ba6ead2b5d77e96d7b17730c13c3d5f
     return result;
   }
 
@@ -127,17 +151,27 @@ class RowMatrixOperations {
   // Return nullptr if dimensions mismatch for input matrices.
   static std::unique_ptr<RowMatrix<T>> MultiplyMatrices(std::unique_ptr<RowMatrix<T>> mat1,
                                                         std::unique_ptr<RowMatrix<T>> mat2) {
+<<<<<<< HEAD
     // TODO(P0): Add code
+=======
+>>>>>>> b9de15364ba6ead2b5d77e96d7b17730c13c3d5f
     int rows_1 = mat1->GetRows();
     int rows_2 = mat2->GetRows();
     int cols_1 = mat1->GetColumns();
     int cols_2 = mat2->GetColumns();
+<<<<<<< HEAD
     std::unique_ptr<RowMatrix<int>> result{new RowMatrix<int>(rows_1, cols_2)};
+=======
+>>>>>>> b9de15364ba6ead2b5d77e96d7b17730c13c3d5f
 
     if (cols_1 != rows_2) {
       return nullptr;
     }
 
+<<<<<<< HEAD
+=======
+    std::unique_ptr<RowMatrix<T>> result{new RowMatrix<T>(rows_1, cols_2)};
+>>>>>>> b9de15364ba6ead2b5d77e96d7b17730c13c3d5f
     for (int i = 0; i < rows_1; i++) {
       for (int j = 0; j < cols_2; j++) {
         result->SetElem(i, j, 0);
@@ -147,6 +181,10 @@ class RowMatrixOperations {
         }
       }
     }
+<<<<<<< HEAD
+=======
+
+>>>>>>> b9de15364ba6ead2b5d77e96d7b17730c13c3d5f
     return result;
   }
 
@@ -155,6 +193,7 @@ class RowMatrixOperations {
   static std::unique_ptr<RowMatrix<T>> GemmMatrices(std::unique_ptr<RowMatrix<T>> matA,
                                                     std::unique_ptr<RowMatrix<T>> matB,
                                                     std::unique_ptr<RowMatrix<T>> matC) {
+<<<<<<< HEAD
     // TODO(P0): Add code
     int rows_A = matA->GetRows();
     int cols_A = matA->GetColumns();
@@ -179,6 +218,24 @@ class RowMatrixOperations {
     intermediate = MultiplyMatrices(std::move(matA), std::move(matB));
     result = AddMatrices(std::move(intermediate), std::move(matC));
 
+=======
+    int rows_a = matA->GetRows();
+    int rows_b = matB->GetRows();
+    int cols_a = matA->GetColumns();
+    int cols_b = matB->GetColumns();
+    int rows_c = matC->GetRows();
+    int cols_c = matC->GetColumns();
+
+    if (cols_a != rows_b || rows_a != rows_c || cols_b != cols_c) {
+      return nullptr;
+    }
+
+    std::unique_ptr<RowMatrix<T>> result{new RowMatrix<T>(rows_c, cols_c)};
+    std::unique_ptr<RowMatrix<T>> result_add{new RowMatrix<T>(rows_c, cols_c)};
+
+    result_add = MultiplyMatrices(std::move(matA), std::move(matB));
+    result = AddMatrices(std::move(result_add), std::move(matC));
+>>>>>>> b9de15364ba6ead2b5d77e96d7b17730c13c3d5f
     return result;
   }
 };
