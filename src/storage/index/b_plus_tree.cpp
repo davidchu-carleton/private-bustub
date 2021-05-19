@@ -115,8 +115,11 @@ bool BPLUSTREE_TYPE::InsertIntoLeaf(const KeyType &key, const ValueType &value, 
   if(leaf_node->Lookup(key, &temp_value, comparator_)){
     return false;
   } else {
-    if(leaf_node->GetSize() < leaf_node->GetMaxSize())
-      leaf_node->Insert(key, value, comparator_);
+    leaf_node->Insert(key, value, comparator_);
+    if(leaf_node->GetSize() > leaf_node->GetMaxSize()) {
+      auto new_page_node = Split(leaf_node);
+      InsertIntoParent(leaf_node, new_page_node->KeyAt(0), new_page_node, transaction);
+    }
   return true;
   }
 }
@@ -129,7 +132,21 @@ bool BPLUSTREE_TYPE::InsertIntoLeaf(const KeyType &key, const ValueType &value, 
  * of key & value pairs from input page to newly created page
  */
 INDEX_TEMPLATE_ARGUMENTS
-BPlusTreePage *BPLUSTREE_TYPE::Split(BPlusTreePage *node) { return nullptr; }
+BPlusTreePage *BPLUSTREE_TYPE::Split(BPlusTreePage *node) { 
+  page_id_t new_page_id; // place holder
+  auto new_page = buffer_pool_manager_->NewPage(new_page_id);
+  if(new_page == nullptr){
+     throw std::bad_alloc();
+  }
+  N* new_node = reinterpret_cast<N *>(new_page->GetData());
+  if (new_node->IsLeafPage()) {
+    new_node->SetNextPageId(node->GetNextPageId());
+    node->SetNextPageId(new_node->GetPageId());
+  }
+  new_node->Init(new_page_id, INVALID_PAGE_ID);
+  node->MoveHalfTo(new_node, buffer_pool_manager_);
+  return new_node;
+ }
 
 /*
  * Insert key & value pair into internal page after split
