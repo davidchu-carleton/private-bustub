@@ -52,23 +52,18 @@ const MappingType &INDEXITERATOR_TYPE::operator*() {
 INDEX_TEMPLATE_ARGUMENTS
 INDEXITERATOR_TYPE &INDEXITERATOR_TYPE::operator++() {
   index_++;
-  if (index_ == leaf_node_->GetSize() && leaf_node_->GetNextPageId() != INVALID_PAGE_ID) {
-    page_id_t next_page_id = leaf_node_->GetNextPageId();
+  if (index_ >= leaf_node_->GetSize()) {
+      page_id_t next = leaf_node_->GetNextPageId();
+      buffer_pool_manager_->UnpinPage(leaf_node_->GetPageId(), false);
+      if (next == INVALID_PAGE_ID) {
+        leaf_node_ = nullptr;
+      } else {
 
-    auto *page = buffer_pool_manager_->FetchPage(next_page_id);
-    if(page == nullptr){
-      throw Exception(EXCEPTION_TYPE_INDEX, "all pageS are pinned")
+        Page *page = buffer_pool_manager_->FetchPage(next);
+        leaf_node_ = reinterpret_cast<B_PLUS_TREE_LEAF_PAGE_TYPE *>(page->GetData());
+        index_ = 0;
+      }
     }
-    page->RLatch();
-    buffer_pool_manager_->FetchPage(leaf_node_->GetPageId))->RUnlatch();
-    buffer_pool_manager_->UnpinPage(leaf_node_->GetPageId), false;
-    buffer_pool_manager_->UnpinPage(leaf_node_->GetPageId, false);
-
-    auto next_leaf_node_ = reinterpret_cast<B_PLUS_TREE_LEAF_PAGE_TYPE *>(page->GetData());
-    assert(next_leaf_node_->IsLeafPage());
-    index_ = 0;
-    leaf_node_ = next_leaf_node_;
-
     //if (next_page_id != INVALID_PAGE_ID) {
       //buffer_pool_manager_->UnpinPage(page_id_, false);
       //auto page = buffer_pool_manager_->FetchPage(next_page_id);
@@ -76,7 +71,6 @@ INDEXITERATOR_TYPE &INDEXITERATOR_TYPE::operator++() {
       //index_ = 0;
       //page_id_ = next_page_id;
     //}
-  }
   return *this;
 }
 

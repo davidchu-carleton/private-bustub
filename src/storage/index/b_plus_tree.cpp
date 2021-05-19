@@ -229,6 +229,7 @@ INDEXITERATOR_TYPE BPLUSTREE_TYPE::begin() {
   auto leaf_node = reinterpret_cast<B_PLUS_TREE_LEAF_PAGE_TYPE *>(leaf_page->GetData());
   auto page_id = leaf_node->GetPageId();
   return INDEXITERATOR_TYPE(page_id, 0, buffer_pool_manager_);
+
  }
 
 /*
