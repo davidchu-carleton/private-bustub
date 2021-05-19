@@ -47,8 +47,8 @@ bool BPLUSTREE_TYPE::GetValue(const KeyType &key, std::vector<ValueType> *result
   if(IsEmpty()) {
     return false;
   }
-  //auto leaf_page = FindLeafPage(key, false);
-  auto leaf_page = buffer_pool_manager_->FetchPage(root_page_id_);
+  auto leaf_page = FindLeafPage(key, false);
+  //auto leaf_page = buffer_pool_manager_->FetchPage(root_page_id_);
   auto leaf_node = reinterpret_cast<B_PLUS_TREE_LEAF_PAGE_TYPE *>(leaf_page->GetData());
   ValueType temp_value;
   if (leaf_node->Lookup(key, &temp_value, comparator_)){
@@ -107,8 +107,8 @@ void BPLUSTREE_TYPE::StartNewTree(const KeyType &key, const ValueType &value) {
  */
 INDEX_TEMPLATE_ARGUMENTS
 bool BPLUSTREE_TYPE::InsertIntoLeaf(const KeyType &key, const ValueType &value, Transaction *transaction) {
-  //auto leaf_page = FindLeafPage(key, false);
-  auto leaf_page = buffer_pool_manager_->FetchPage(root_page_id_);
+  auto leaf_page = FindLeafPage(key, false);
+  //auto leaf_page = buffer_pool_manager_->FetchPage(root_page_id_);
   auto leaf_node = reinterpret_cast<B_PLUS_TREE_LEAF_PAGE_TYPE *>(leaf_page->GetData());
   // check if key exists
   ValueType temp_value;
@@ -253,11 +253,13 @@ INDEXITERATOR_TYPE BPLUSTREE_TYPE::Begin(const KeyType &key) {
  */
 INDEX_TEMPLATE_ARGUMENTS
 INDEXITERATOR_TYPE BPLUSTREE_TYPE::end() { 
-  INDEXITERATOR_TYPE end_iterator = begin();
-  while (!end_iterator.isEnd()) {
-    ++end_iterator;
-  }
-  return ++end_iterator;
+  return INDEXITERATOR_TYPE(INT_MAX, INT_MAX, buffer_pool_manager_);
+  // INDEXITERATOR_TYPE end_iterator = begin();
+  // while (!end_iterator.isEnd()) {
+  //   ++end_iterator;
+  // }
+  // return ++end_iterator;
+
 }
 
 /*****************************************************************************
