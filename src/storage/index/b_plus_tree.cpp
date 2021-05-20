@@ -92,7 +92,7 @@ void BPLUSTREE_TYPE::StartNewTree(const KeyType &key, const ValueType &value) {
     throw std::bad_alloc();
   }
   auto new_page_node = reinterpret_cast<B_PLUS_TREE_LEAF_PAGE_TYPE *>(new_page->GetData());
-  new_page_node->Init(root_page_id_, INVALID_PAGE_ID);
+  new_page_node->Init(root_page_id_, INVALID_PAGE_ID, leaf_max_size_);
   new_page_node->Insert(key, value, comparator_);
   UpdateRootPageId(true);
   buffer_pool_manager_->UnpinPage(new_page->GetPageId(), true);
@@ -118,7 +118,7 @@ bool BPLUSTREE_TYPE::InsertIntoLeaf(const KeyType &key, const ValueType &value, 
   } else {
     leaf_node->Insert(key, value, comparator_);
     if(leaf_node->GetSize() > leaf_node->GetMaxSize()) {
-      LOG_INFO("# Max size: %d", leaf_node->GetMaxSize());
+      LOG_INFO("# This is max size: %d", leaf_node->GetMaxSize());
       auto new_page_node = Split(leaf_node);
       if (new_page_node->IsLeafPage()) {
         LeafPage *leaf = reinterpret_cast<LeafPage *>(new_page_node);
@@ -153,13 +153,13 @@ BPlusTreePage *BPLUSTREE_TYPE::Split(BPlusTreePage *node) {
     LeafPage *new_leaf = reinterpret_cast<LeafPage *>(new_node_page);
     new_leaf->SetNextPageId(leaf->GetNextPageId());
     leaf->SetNextPageId(new_leaf->GetPageId());
-    new_leaf->Init(new_page_id, INVALID_PAGE_ID);
+    new_leaf->Init(new_page_id, INVALID_PAGE_ID, leaf_max_size_);
     leaf->MoveHalfTo(new_leaf);
     return new_leaf;
     } else {
     InternalPage *internal = reinterpret_cast<InternalPage *>(node);
     InternalPage *new_internal = reinterpret_cast<InternalPage *>(new_node_page);
-    new_internal->Init(new_page_id, INVALID_PAGE_ID);
+    new_internal->Init(new_page_id, INVALID_PAGE_ID, internal_max_size_);
     internal->MoveHalfTo(new_internal, buffer_pool_manager_);
     return new_internal;
   }
@@ -182,7 +182,7 @@ void BPLUSTREE_TYPE::InsertIntoParent(BPlusTreePage *old_node, const KeyType &ke
       // assert(newPage != nullptr);
       // assert(newPage->GetPinCount() == 1);
       InternalPage *newRoot = reinterpret_cast<InternalPage *>(newPage);
-      newRoot->Init(root_page_id_);
+      newRoot->Init(root_page_id_, INVALID_PAGE_ID, internal_max_size_);
       newRoot->PopulateNewRoot(old_node->GetPageId(),key,new_node->GetPageId());
       old_node->SetParentPageId(root_page_id_);
       new_node->SetParentPageId(root_page_id_);
