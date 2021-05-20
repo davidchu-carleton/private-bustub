@@ -164,7 +164,7 @@ void BPLUSTREE_TYPE::InsertIntoParent(BPlusTreePage *old_node, const KeyType &ke
       Page* const newPage = buffer_pool_manager_->NewPage(root_page_id_);
       assert(newPage != nullptr);
       assert(newPage->GetPinCount() == 1);
-      B_PLUS_TREE_INTERNAL_PAGE *newRoot = reinterpret_cast<B_PLUS_TREE_INTERNAL_PAGE *>(newPage->GetData());
+      InternalPage *newRoot = reinterpret_cast<InternalPage *>(newPage);
       newRoot->Init(root_page_id_);
       newRoot->PopulateNewRoot(old_node->GetPageId(),key,new_node->GetPageId());
       old_node->SetParentPageId(root_page_id_);
@@ -178,14 +178,14 @@ void BPLUSTREE_TYPE::InsertIntoParent(BPlusTreePage *old_node, const KeyType &ke
     page_id_t parentId = old_node->GetParentPageId();
     auto *page = FetchPage(parentId);
     assert(page != nullptr);
-    B_PLUS_TREE_INTERNAL_PAGE *parent = reinterpret_cast<B_PLUS_TREE_INTERNAL_PAGE *>(page);
+    InternalPage *parent = reinterpret_cast<InternalPage *>(page);
     new_node->SetParentPageId(parentId);
     buffer_pool_manager_->UnpinPage(new_node->GetPageId(),true);
     //insert new node after old node
     parent->InsertNodeAfter(old_node->GetPageId(), key, new_node->GetPageId());
     if (parent->GetSize() > parent->GetMaxSize()) {
       //begin /* Split Parent */
-      B_PLUS_TREE_INTERNAL_PAGE *newLeafPage = Split(parent);//new page need unpin
+      InternalPage *newLeafPage = Split(parent);//new page need unpin
       InsertIntoParent(parent,newLeafPage->KeyAt(0),newLeafPage,transaction);
     }
     buffer_pool_manager_->UnpinPage(parentId,true);
