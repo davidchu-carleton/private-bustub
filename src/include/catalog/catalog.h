@@ -80,7 +80,7 @@ class Catalog {
     return nullptr;
   }
 
-  /** @return table metadata by name */
+  /** @return table metadata by name. Throw a std::out_of_range exception if no such table exists. */
   TableMetadata *GetTable(const std::string &table_name) { return nullptr; }
 
   /** @return table metadata by oid */
@@ -104,10 +104,13 @@ class Catalog {
     return nullptr;
   }
 
+  /** @return index info by name. Throw a std::out_of_range exception if no such index exists. */
   IndexInfo *GetIndex(const std::string &index_name, const std::string &table_name) { return nullptr; }
 
+  /** @return index metadata by oid */
   IndexInfo *GetIndex(index_oid_t index_oid) { return nullptr; }
 
+  /** @return a vector of index infos for a given table. */
   std::vector<IndexInfo *> GetTableIndexes(const std::string &table_name) { return std::vector<IndexInfo *>(); }
 
  private:

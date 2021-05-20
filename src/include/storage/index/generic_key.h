@@ -32,7 +32,7 @@ class GenericKey {
   inline void SetFromKey(const Tuple &tuple) {
     // intialize to 0
     memset(data_, 0, KeySize);
-    memcpy(data_, tuple.GetData(), tuple.GetLength());
+    memcpy(data_, tuple.GetData(), KeySize);
   }
 
   // NOTE: for test purpose only
