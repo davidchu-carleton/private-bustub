@@ -177,7 +177,7 @@ INDEX_TEMPLATE_ARGUMENTS
 void BPLUSTREE_TYPE::InsertIntoParent(BPlusTreePage *old_node, const KeyType &key, BPlusTreePage *new_node,
                                       Transaction *transaction) {
       if (old_node->IsRootPage()) {
-      Page* const newPage = buffer_pool_manager_->NewPage(root_page_id_);
+      Page* const newPage = buffer_pool_manager_->NewPage(&root_page_id_);
       assert(newPage != nullptr);
       assert(newPage->GetPinCount() == 1);
       InternalPage *newRoot = reinterpret_cast<InternalPage *>(newPage);
@@ -192,7 +192,7 @@ void BPLUSTREE_TYPE::InsertIntoParent(BPlusTreePage *old_node, const KeyType &ke
       return;
     }
     page_id_t parentId = old_node->GetParentPageId();
-    auto *page = FetchPage(parentId);
+    auto *page = buffer_pool_manager_->FetchPage(parentId);
     assert(page != nullptr);
     InternalPage *parent = reinterpret_cast<InternalPage *>(page);
     new_node->SetParentPageId(parentId);
@@ -201,10 +201,11 @@ void BPLUSTREE_TYPE::InsertIntoParent(BPlusTreePage *old_node, const KeyType &ke
     parent->InsertNodeAfter(old_node->GetPageId(), key, new_node->GetPageId());
     if (parent->GetSize() > parent->GetMaxSize()) {
       //begin /* Split Parent */
-      InternalPage *newLeafPage = Split(parent);//new page need unpin
-      InsertIntoParent(parent,newLeafPage->KeyAt(0),newLeafPage,transaction);
+      auto *newLeafPage = Split(parent);//new page need unpin
+      LeafPage *new_leaf = reinterpret_cast<LeafPage *>(newLeafPage);
+      InsertIntoParent(parent, new_leaf->KeyAt(0), new_leaf, transaction);
     }
-    buffer_pool_manager_->UnpinPage(parentId,true);
+    buffer_pool_manager_->UnpinPage(parentId, true);
 
   }
 
