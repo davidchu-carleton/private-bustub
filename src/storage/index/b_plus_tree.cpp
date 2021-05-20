@@ -151,9 +151,9 @@ BPlusTreePage *BPLUSTREE_TYPE::Split(BPlusTreePage *node) {
   if (node->IsLeafPage()) {
     LeafPage *leaf = reinterpret_cast<LeafPage *>(node);
     LeafPage *new_leaf = reinterpret_cast<LeafPage *>(new_node_page);
+    new_leaf->Init(new_page_id, INVALID_PAGE_ID, leaf_max_size_);
     new_leaf->SetNextPageId(leaf->GetNextPageId());
     leaf->SetNextPageId(new_leaf->GetPageId());
-    new_leaf->Init(new_page_id, INVALID_PAGE_ID, leaf_max_size_);
     leaf->MoveHalfTo(new_leaf);
     return new_leaf;
     } else {
