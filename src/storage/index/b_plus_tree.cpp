@@ -15,6 +15,7 @@
 #include "common/rid.h"
 #include "storage/index/b_plus_tree.h"
 #include "storage/page/header_page.h"
+#include "common/logger.h"
 
 namespace bustub {
 INDEX_TEMPLATE_ARGUMENTS
@@ -117,6 +118,7 @@ bool BPLUSTREE_TYPE::InsertIntoLeaf(const KeyType &key, const ValueType &value, 
   } else {
     leaf_node->Insert(key, value, comparator_);
     if(leaf_node->GetSize() > leaf_node->GetMaxSize()) {
+      LOG_INFO("# Max size: %d", leaf_node->GetMaxSize());
       auto new_page_node = Split(leaf_node);
       if (new_page_node->IsLeafPage()) {
         LeafPage *leaf = reinterpret_cast<LeafPage *>(new_page_node);
@@ -125,7 +127,6 @@ bool BPLUSTREE_TYPE::InsertIntoLeaf(const KeyType &key, const ValueType &value, 
         InternalPage *internal = reinterpret_cast<InternalPage *>(new_page_node);
         InsertIntoParent(leaf_node, internal->KeyAt(0), internal, transaction);
       }
-      
     }
   return true;
   }
@@ -178,8 +179,8 @@ void BPLUSTREE_TYPE::InsertIntoParent(BPlusTreePage *old_node, const KeyType &ke
                                       Transaction *transaction) {
       if (old_node->IsRootPage()) {
       Page* const newPage = buffer_pool_manager_->NewPage(&root_page_id_);
-      assert(newPage != nullptr);
-      assert(newPage->GetPinCount() == 1);
+      // assert(newPage != nullptr);
+      // assert(newPage->GetPinCount() == 1);
       InternalPage *newRoot = reinterpret_cast<InternalPage *>(newPage);
       newRoot->Init(root_page_id_);
       newRoot->PopulateNewRoot(old_node->GetPageId(),key,new_node->GetPageId());
@@ -193,10 +194,10 @@ void BPLUSTREE_TYPE::InsertIntoParent(BPlusTreePage *old_node, const KeyType &ke
     }
     page_id_t parentId = old_node->GetParentPageId();
     auto *page = buffer_pool_manager_->FetchPage(parentId);
-    assert(page != nullptr);
+    //assert(page != nullptr);
     InternalPage *parent = reinterpret_cast<InternalPage *>(page);
     new_node->SetParentPageId(parentId);
-    buffer_pool_manager_->UnpinPage(new_node->GetPageId(),true);
+    buffer_pool_manager_->UnpinPage(new_node->GetPageId(), true);
     //insert new node after old node
     parent->InsertNodeAfter(old_node->GetPageId(), key, new_node->GetPageId());
     if (parent->GetSize() > parent->GetMaxSize()) {
