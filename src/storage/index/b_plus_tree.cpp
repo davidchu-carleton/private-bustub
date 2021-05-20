@@ -118,7 +118,14 @@ bool BPLUSTREE_TYPE::InsertIntoLeaf(const KeyType &key, const ValueType &value, 
     leaf_node->Insert(key, value, comparator_);
     if(leaf_node->GetSize() > leaf_node->GetMaxSize()) {
       auto new_page_node = Split(leaf_node);
-      InsertIntoParent(leaf_node, new_page_node->KeyAt(0), new_page_node, transaction);
+      if (new_page_node->IsLeafPage()) {
+        LeafPage *leaf = reinterpret_cast<LeafPage *>(new_page_node);
+        InsertIntoParent(leaf_node, leaf->KeyAt(0), leaf, transaction);  
+      } else {
+        InternalPage *internal = reinterpret_cast<InternalPage *>(new_page_node);
+        InsertIntoParent(leaf_node, internal->KeyAt(0), internal, transaction);
+      }
+      
     }
   return true;
   }
@@ -134,18 +141,27 @@ bool BPLUSTREE_TYPE::InsertIntoLeaf(const KeyType &key, const ValueType &value, 
 INDEX_TEMPLATE_ARGUMENTS
 BPlusTreePage *BPLUSTREE_TYPE::Split(BPlusTreePage *node) { 
   page_id_t new_page_id; // place holder
-  auto new_page = buffer_pool_manager_->NewPage(new_page_id);
+  auto new_page = buffer_pool_manager_->NewPage(&new_page_id);
   if(new_page == nullptr){
      throw std::bad_alloc();
   }
-  N* new_node = reinterpret_cast<N *>(new_page->GetData());
-  if (new_node->IsLeafPage()) {
-    new_node->SetNextPageId(node->GetNextPageId());
-    node->SetNextPageId(new_node->GetPageId());
+  //auto new_node = reinterpret_cast<N *>(new_page->GetData());
+  BPlusTreePage *new_node_page = reinterpret_cast<BPlusTreePage *>(new_page->GetData());
+  if (node->IsLeafPage()) {
+    LeafPage *leaf = reinterpret_cast<LeafPage *>(node);
+    LeafPage *new_leaf = reinterpret_cast<LeafPage *>(new_node_page);
+    new_leaf->SetNextPageId(leaf->GetNextPageId());
+    leaf->SetNextPageId(new_leaf->GetPageId());
+    new_leaf->Init(new_page_id, INVALID_PAGE_ID);
+    leaf->MoveHalfTo(new_leaf);
+    return new_leaf;
+    } else {
+    InternalPage *internal = reinterpret_cast<InternalPage *>(node);
+    InternalPage *new_internal = reinterpret_cast<InternalPage *>(new_node_page);
+    new_internal->Init(new_page_id, INVALID_PAGE_ID);
+    internal->MoveHalfTo(new_internal, buffer_pool_manager_);
+    return new_internal;
   }
-  new_node->Init(new_page_id, INVALID_PAGE_ID);
-  node->MoveHalfTo(new_node, buffer_pool_manager_);
-  return new_node;
  }
 
 /*
