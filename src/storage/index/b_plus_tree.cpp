@@ -10,12 +10,15 @@
 //===----------------------------------------------------------------------===//
 
 #include <string>
+#include <cinttypes>
 
 #include "common/exception.h"
 #include "common/rid.h"
 #include "storage/index/b_plus_tree.h"
 #include "storage/page/header_page.h"
 #include "common/logger.h"
+
+
 
 namespace bustub {
 INDEX_TEMPLATE_ARGUMENTS
@@ -53,9 +56,11 @@ bool BPLUSTREE_TYPE::GetValue(const KeyType &key, std::vector<ValueType> *result
   auto leaf_node = reinterpret_cast<B_PLUS_TREE_LEAF_PAGE_TYPE *>(leaf_page->GetData());
   ValueType temp_value;
   if (leaf_node->Lookup(key, &temp_value, comparator_)){
-     result->push_back(temp_value);
-     return true;
+    LOG_INFO("# sucessful");
+    result->push_back(temp_value);
+    return true;
   }else{
+    LOG_INFO("# failed");
     return false;
   }
 }
@@ -118,15 +123,20 @@ bool BPLUSTREE_TYPE::InsertIntoLeaf(const KeyType &key, const ValueType &value, 
   } else {
     leaf_node->Insert(key, value, comparator_);
     if(leaf_node->GetSize() > leaf_node->GetMaxSize()) {
-      LOG_INFO("# This is max size: %d", leaf_node->GetMaxSize());
+      // LOG_INFO("# This is max size: %d", leaf_node->GetMaxSize());
       auto new_page_node = Split(leaf_node);
-      if (new_page_node->IsLeafPage()) {
-        LeafPage *leaf = reinterpret_cast<LeafPage *>(new_page_node);
-        InsertIntoParent(leaf_node, leaf->KeyAt(0), leaf, transaction);  
-      } else {
-        InternalPage *internal = reinterpret_cast<InternalPage *>(new_page_node);
-        InsertIntoParent(leaf_node, internal->KeyAt(0), internal, transaction);
-      }
+      // if (new_page_node->IsLeafPage()) {
+      //   LOG_INFO("# This is insert into leaf - leaf");
+      //   LeafPage *leaf = reinterpret_cast<LeafPage *>(new_page_node);
+      //   InsertIntoParent(leaf_node, leaf->KeyAt(0), leaf, transaction);  
+      // } else {
+      //   LOG_INFO("# This is insert into leaf - internal");
+      //   InternalPage *internal = reinterpret_cast<InternalPage *>(new_page_node);
+      //   //LOG_INFO("Insert into leaf %" PRId64, internal->KeyAt(1).ToInt64());
+      //   InsertIntoParent(leaf_node, internal->KeyAt(1), internal, transaction);
+      // }
+      LeafPage *leaf = reinterpret_cast<LeafPage *>(new_page_node);
+      InsertIntoParent(leaf_node, leaf->KeyAt(0), leaf, transaction); 
     }
   return true;
   }
@@ -149,6 +159,7 @@ BPlusTreePage *BPLUSTREE_TYPE::Split(BPlusTreePage *node) {
   //auto new_node = reinterpret_cast<N *>(new_page->GetData());
   BPlusTreePage *new_node_page = reinterpret_cast<BPlusTreePage *>(new_page->GetData());
   if (node->IsLeafPage()) {
+    // leaf page split
     LeafPage *leaf = reinterpret_cast<LeafPage *>(node);
     LeafPage *new_leaf = reinterpret_cast<LeafPage *>(new_node_page);
     new_leaf->Init(new_page_id, INVALID_PAGE_ID, leaf_max_size_);
@@ -157,6 +168,7 @@ BPlusTreePage *BPLUSTREE_TYPE::Split(BPlusTreePage *node) {
     leaf->MoveHalfTo(new_leaf);
     return new_leaf;
     } else {
+      // internal page split
     InternalPage *internal = reinterpret_cast<InternalPage *>(node);
     InternalPage *new_internal = reinterpret_cast<InternalPage *>(new_node_page);
     new_internal->Init(new_page_id, INVALID_PAGE_ID, internal_max_size_);
@@ -177,10 +189,10 @@ BPlusTreePage *BPLUSTREE_TYPE::Split(BPlusTreePage *node) {
 INDEX_TEMPLATE_ARGUMENTS
 void BPLUSTREE_TYPE::InsertIntoParent(BPlusTreePage *old_node, const KeyType &key, BPlusTreePage *new_node,
                                       Transaction *transaction) {
-      if (old_node->IsRootPage()) {
-      Page* const newPage = buffer_pool_manager_->NewPage(&root_page_id_);
-      // assert(newPage != nullptr);
-      // assert(newPage->GetPinCount() == 1);
+    if (old_node->IsRootPage()) {
+      //LOG_INFO("# This is root split\n");
+      LOG_INFO("Root add key %" PRId64, key.ToInt64());
+      auto newPage = buffer_pool_manager_->NewPage(&root_page_id_);
       InternalPage *newRoot = reinterpret_cast<InternalPage *>(newPage);
       newRoot->Init(root_page_id_, INVALID_PAGE_ID, internal_max_size_);
       newRoot->PopulateNewRoot(old_node->GetPageId(),key,new_node->GetPageId());
@@ -202,9 +214,10 @@ void BPLUSTREE_TYPE::InsertIntoParent(BPlusTreePage *old_node, const KeyType &ke
     parent->InsertNodeAfter(old_node->GetPageId(), key, new_node->GetPageId());
     if (parent->GetSize() > parent->GetMaxSize()) {
       //begin /* Split Parent */
-      auto *newLeafPage = Split(parent);//new page need unpin
-      LeafPage *new_leaf = reinterpret_cast<LeafPage *>(newLeafPage);
-      InsertIntoParent(parent, new_leaf->KeyAt(0), new_leaf, transaction);
+      LOG_INFO("# This is not root split\n");
+      auto *newParentPage = Split(parent); //new page need unpin
+      InternalPage *new_parent = reinterpret_cast<InternalPage *>(newParentPage);
+      InsertIntoParent(parent, new_parent->KeyAt(0), new_parent, transaction);
     }
     buffer_pool_manager_->UnpinPage(parentId, true);
 
@@ -350,21 +363,9 @@ Page *BPLUSTREE_TYPE::FindLeafPage(const KeyType &key, bool leftMost) {
     }else{
       child_page_id = internal->Lookup(key, comparator_);
     }
-        // if(txn==nullptr) {
-        //     page->RUnlatch();
-        //     buffer_pool_manager_->UnpinPage(page->GetPageId(), false);
-        // }
-    page = buffer_pool_manager_->FetchPage(child_page_id);
-    // LockPage(page, txn, op);
+    buffer_pool_manager_->UnpinPage(page->GetPageId(), false);
+    page = buffer_pool_manager_->FetchPage(child_page_id); //return leaf found
     page_node = reinterpret_cast<BPlusTreePage *>(page->GetData());
-        // if(txn != nullptr){
-        //     if(op==Operation::SEARCH || 
-        //     (op==Operation::INSERT && node->GetSize() < node->GetMaxSize())|| 
-        //     (op==Operation::DELETE && node->GetSize() > node->GetMinSize())){
-        //         // Search, or current page is safe
-        //         UnlockParentPage(page, txn, op);
-        //     }
-        // }
   }
   return page;
 }
