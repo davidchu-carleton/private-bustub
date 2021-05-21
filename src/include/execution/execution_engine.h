@@ -47,7 +47,8 @@ class ExecutionEngine {
         }
       }
     } catch (Exception &e) {
-      // TODO(student): handle exceptions
+      // this is where exceptions thrown by executors would be handled
+      // (not required for project 3)
     }
 
     return true;

@@ -25,7 +25,7 @@ using index_oid_t = uint32_t;
  * Metadata about a table.
  */
 struct TableMetadata {
-  TableMetadata(Schema schema, std::string name, std::unique_ptr<TableHeap> &&table, table_oid_t oid)
+  TableMetadata(Schema schema, std::string name, std::unique_ptr<TableHeap> table, table_oid_t oid)
       : schema_(std::move(schema)), name_(std::move(name)), table_(std::move(table)), oid_(oid) {}
   Schema schema_;
   std::string name_;
@@ -37,7 +37,7 @@ struct TableMetadata {
  * Metadata about a index
  */
 struct IndexInfo {
-  IndexInfo(Schema key_schema, std::string name, std::unique_ptr<Index> &&index, index_oid_t index_oid,
+  IndexInfo(Schema key_schema, std::string name, std::unique_ptr<Index> index, index_oid_t index_oid,
             std::string table_name, size_t key_size)
       : key_schema_(std::move(key_schema)),
         name_(std::move(name)),

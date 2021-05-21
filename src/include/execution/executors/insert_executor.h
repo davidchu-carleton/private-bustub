@@ -41,7 +41,8 @@ class InsertExecutor : public AbstractExecutor {
   void Init() override;
 
   // Note that Insert does not make use of the tuple pointer being passed in.
-  // We return false if the insert failed for any reason, and return true if all inserts succeeded.
+  // return false to indicate no more work to do when the
+  // insert succeeds, and throw a std::runtime_error when it fails
   bool Next([[maybe_unused]] Tuple *tuple, RID *rid) override;
 
  private:
