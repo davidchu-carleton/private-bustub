@@ -191,7 +191,7 @@ void BPLUSTREE_TYPE::InsertIntoParent(BPlusTreePage *old_node, const KeyType &ke
                                       Transaction *transaction) {
     if (old_node->IsRootPage()) {
       //LOG_INFO("# This is root split\n");
-      LOG_INFO("Root add key %" PRId64, key.ToInt64());
+      //LOG_INFO("Root add key %" PRId64, key.ToInt64());
       auto newPage = buffer_pool_manager_->NewPage(&root_page_id_);
       InternalPage *newRoot = reinterpret_cast<InternalPage *>(newPage);
       newRoot->Init(root_page_id_, INVALID_PAGE_ID, internal_max_size_);
@@ -200,13 +200,12 @@ void BPLUSTREE_TYPE::InsertIntoParent(BPlusTreePage *old_node, const KeyType &ke
       new_node->SetParentPageId(root_page_id_);
       UpdateRootPageId();
       //fetch page and new page need to unpin page
-      buffer_pool_manager_->UnpinPage(new_node->GetPageId(),true);
-      buffer_pool_manager_->UnpinPage(newRoot->GetPageId(),true);
+      buffer_pool_manager_->UnpinPage(new_node->GetPageId(), true);
+      buffer_pool_manager_->UnpinPage(newRoot->GetPageId(), true);
       return;
     }
     page_id_t parentId = old_node->GetParentPageId();
     auto *page = buffer_pool_manager_->FetchPage(parentId);
-    //assert(page != nullptr);
     InternalPage *parent = reinterpret_cast<InternalPage *>(page);
     new_node->SetParentPageId(parentId);
     buffer_pool_manager_->UnpinPage(new_node->GetPageId(), true);
@@ -214,13 +213,13 @@ void BPLUSTREE_TYPE::InsertIntoParent(BPlusTreePage *old_node, const KeyType &ke
     parent->InsertNodeAfter(old_node->GetPageId(), key, new_node->GetPageId());
     if (parent->GetSize() > parent->GetMaxSize()) {
       //begin /* Split Parent */
-      LOG_INFO("# This is not root split\n");
+      //LOG_INFO("# This is not root split\n");
       auto *newParentPage = Split(parent); //new page need unpin
       InternalPage *new_parent = reinterpret_cast<InternalPage *>(newParentPage);
       InsertIntoParent(parent, new_parent->KeyAt(0), new_parent, transaction);
     }
     buffer_pool_manager_->UnpinPage(parentId, true);
-
+    buffer_pool_manager_->UnpinPage(new_node->GetPageId(), true);
   }
 
 /*****************************************************************************
@@ -397,9 +396,12 @@ void BPLUSTREE_TYPE::UpdateRootPageId(bool insert_record) {
  */
 INDEX_TEMPLATE_ARGUMENTS
 void BPLUSTREE_TYPE::InsertFromFile(const std::string &file_name, Transaction *transaction) {
+  LOG_INFO("# Check from the beginning of InsertFromFile");
   int64_t key;
   std::ifstream input(file_name);
+  LOG_INFO("# Check from before the while loop of InsertFromFile");
   while (input) {
+    LOG_INFO("# Check from InsertFromFile");
     input >> key;
 
     KeyType index_key;
