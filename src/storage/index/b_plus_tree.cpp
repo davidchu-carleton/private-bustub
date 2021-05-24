@@ -212,14 +212,13 @@ void BPLUSTREE_TYPE::InsertIntoParent(BPlusTreePage *old_node, const KeyType &ke
     //insert new node after old node
     parent->InsertNodeAfter(old_node->GetPageId(), key, new_node->GetPageId());
     if (parent->GetSize() > parent->GetMaxSize()) {
-      //begin /* Split Parent */
       //LOG_INFO("# This is not root split\n");
-      auto *newParentPage = Split(parent); //new page need unpin
+      auto *newParentPage = Split(parent); 
       InternalPage *new_parent = reinterpret_cast<InternalPage *>(newParentPage);
       InsertIntoParent(parent, new_parent->KeyAt(0), new_parent, transaction);
     }
     buffer_pool_manager_->UnpinPage(parentId, true);
-    buffer_pool_manager_->UnpinPage(new_node->GetPageId(), true);
+    //buffer_pool_manager_->UnpinPage(new_node->GetPageId(), true);
   }
 
 /*****************************************************************************
@@ -366,6 +365,7 @@ Page *BPLUSTREE_TYPE::FindLeafPage(const KeyType &key, bool leftMost) {
     page = buffer_pool_manager_->FetchPage(child_page_id); //return leaf found
     page_node = reinterpret_cast<BPlusTreePage *>(page->GetData());
   }
+  buffer_pool_manager_->UnpinPage(page->GetPageId(), false);
   return page;
 }
 
