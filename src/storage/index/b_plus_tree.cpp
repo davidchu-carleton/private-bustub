@@ -55,11 +55,11 @@ bool BPLUSTREE_TYPE::GetValue(const KeyType &key, std::vector<ValueType> *result
   auto leaf_node = reinterpret_cast<B_PLUS_TREE_LEAF_PAGE_TYPE *>(leaf_page->GetData());
   ValueType temp_value;
   if (leaf_node->Lookup(key, &temp_value, comparator_)){
-    LOG_INFO("# sucessful");
+    //LOG_INFO("# sucessful");
     result->push_back(temp_value);
     return true;
   }else{
-    LOG_INFO("# failed");
+    //LOG_INFO("# failed");
     return false;
   }
 }
