@@ -10,11 +10,8 @@
 //===----------------------------------------------------------------------===//
 
 #include <string>
-<<<<<<< HEAD
 #include <iostream>
-=======
 #include <cinttypes>
->>>>>>> 0cbda59c5cecaeeb86851265e8eeb1d612826429
 
 #include "common/exception.h"
 #include "common/rid.h"
@@ -359,7 +356,8 @@ INDEXITERATOR_TYPE BPLUSTREE_TYPE::end() {
  * the left most leaf page
  */
 INDEX_TEMPLATE_ARGUMENTS
-Page *BPLUSTREE_TYPE::FindLeafPage(const KeyType &key, bool leftMost) { 
+Page *BPLUSTREE_TYPE::FindLeafPage(const KeyType &key, bool leftMost, 
+                                  Transaction* transaction, Operation operation) { 
   if(IsEmpty()) {
     return nullptr;  
   }

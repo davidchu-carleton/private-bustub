@@ -20,6 +20,7 @@
 #include "storage/page/b_plus_tree_leaf_page.h"
 
 namespace bustub {
+enum class Operation {SEARCH = 0, INSERT, DELETE};
 
 #define BPLUSTREE_TYPE BPlusTree<KeyType, ValueType, KeyComparator>
 
@@ -78,7 +79,9 @@ class BPlusTree {
   void RemoveFromFile(const std::string &file_name, Transaction *transaction = nullptr);
 
  private:
-  Page *FindLeafPage(const KeyType &key, bool leftMost = false);
+  Page *FindLeafPage(const KeyType &key, bool leftMost = false, 
+                    Transaction *transaction = nullptr,
+                    Operation op = Operation::SEARCH);
 
   void StartNewTree(const KeyType &key, const ValueType &value);
 
