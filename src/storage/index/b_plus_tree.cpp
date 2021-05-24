@@ -392,6 +392,7 @@ Page *BPLUSTREE_TYPE::FindLeafPage(const KeyType &key, bool leftMost) {
         //     }
         // }
   }
+  buffer_pool_manager_->UnpinPage(page->GetPageId(), false);
   return page;
 }
 
