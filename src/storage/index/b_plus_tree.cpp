@@ -52,7 +52,6 @@ bool BPLUSTREE_TYPE::GetValue(const KeyType &key, std::vector<ValueType> *result
     return false;
   }
   auto leaf_page = FindLeafPage(key, false);
-  //auto leaf_page = buffer_pool_manager_->FetchPage(root_page_id_);
   auto leaf_node = reinterpret_cast<B_PLUS_TREE_LEAF_PAGE_TYPE *>(leaf_page->GetData());
   ValueType temp_value;
   if (leaf_node->Lookup(key, &temp_value, comparator_)){
@@ -114,7 +113,6 @@ void BPLUSTREE_TYPE::StartNewTree(const KeyType &key, const ValueType &value) {
 INDEX_TEMPLATE_ARGUMENTS
 bool BPLUSTREE_TYPE::InsertIntoLeaf(const KeyType &key, const ValueType &value, Transaction *transaction) {
   auto leaf_page = FindLeafPage(key, false);
-  //auto leaf_page = buffer_pool_manager_->FetchPage(root_page_id_);
   auto leaf_node = reinterpret_cast<B_PLUS_TREE_LEAF_PAGE_TYPE *>(leaf_page->GetData());
   // check if key exists
   ValueType temp_value;
@@ -218,7 +216,6 @@ void BPLUSTREE_TYPE::InsertIntoParent(BPlusTreePage *old_node, const KeyType &ke
       InsertIntoParent(parent, new_parent->KeyAt(0), new_parent, transaction);
     }
     buffer_pool_manager_->UnpinPage(parentId, true);
-    //buffer_pool_manager_->UnpinPage(new_node->GetPageId(), true);
   }
 
 /*****************************************************************************
@@ -236,7 +233,17 @@ void BPLUSTREE_TYPE::InsertIntoParent(BPlusTreePage *old_node, const KeyType &ke
  *                             This method should unlatch and delete before returning.
  */
 INDEX_TEMPLATE_ARGUMENTS
-void BPLUSTREE_TYPE::Remove(const KeyType &key, Transaction *transaction) {}
+void BPLUSTREE_TYPE::Remove(const KeyType &key, Transaction *transaction) {
+  if(IsEmpty()) {
+    return;
+  }
+  auto leaf_page = FindLeafPage(key, false);
+  auto leaf_node = reinterpret_cast<B_PLUS_TREE_LEAF_PAGE_TYPE *>(leaf_page->GetData());
+  //int old_size = leaf_node->GetSize();
+  //int new_size = 
+  leaf_node->Remove(key, comparator_);
+  
+}
 
 /*
  * You first need to find the sibling of input page. If sibling's size + input
