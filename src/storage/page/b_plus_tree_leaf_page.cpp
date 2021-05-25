@@ -264,6 +264,7 @@ void B_PLUS_TREE_LEAF_PAGE_TYPE::MoveLastToFrontOf(BPlusTreeLeafPage *recipient)
 INDEX_TEMPLATE_ARGUMENTS
 void B_PLUS_TREE_LEAF_PAGE_TYPE::CopyFirstFrom(const MappingType &item) {
   //memmove(array + 1, array, GetSize() * sizeof(MappingType));
+  int size = GetSize();
   for (int i = size + 1; i >= 1; i--) {
     array[i] = array[i - 1];
   }
