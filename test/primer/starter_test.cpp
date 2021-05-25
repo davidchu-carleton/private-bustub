@@ -114,10 +114,6 @@ TEST(StarterTest, GemmMatricesTest) {
   int arr4[4] = {1, 16, -3, 36};
   std::unique_ptr<RowMatrix<int>> result_ptr =
       RowMatrixOperations<int>::GemmMatrices(std::move(mat1_ptr), std::move(mat2_ptr), std::move(mat3_ptr));
-<<<<<<< HEAD
-=======
-
->>>>>>> b9de15364ba6ead2b5d77e96d7b17730c13c3d5f
   for (int i = 0; i < 2; i++) {
     for (int j = 0; j < 2; j++) {
       EXPECT_EQ(arr4[i * 2 + j], result_ptr->GetElem(i, j));

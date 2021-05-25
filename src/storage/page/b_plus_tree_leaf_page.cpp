@@ -40,14 +40,10 @@ void B_PLUS_TREE_LEAF_PAGE_TYPE::Init(page_id_t page_id, page_id_t parent_id, in
  * Methods to set/get next page id
  */
 INDEX_TEMPLATE_ARGUMENTS
-page_id_t B_PLUS_TREE_LEAF_PAGE_TYPE::GetNextPageId() const { 
-  return next_page_id_; 
-  }
+page_id_t B_PLUS_TREE_LEAF_PAGE_TYPE::GetNextPageId() const { return next_page_id_; }
 
 INDEX_TEMPLATE_ARGUMENTS
-void B_PLUS_TREE_LEAF_PAGE_TYPE::SetNextPageId(page_id_t next_page_id) {
-  next_page_id_ = next_page_id;
-}
+void B_PLUS_TREE_LEAF_PAGE_TYPE::SetNextPageId(page_id_t next_page_id) { next_page_id_ = next_page_id; }
 
 /**
  * Method to find the first index i so that array[i].first >= key
@@ -55,9 +51,9 @@ void B_PLUS_TREE_LEAF_PAGE_TYPE::SetNextPageId(page_id_t next_page_id) {
  *       that begins at a certain key.
  */
 INDEX_TEMPLATE_ARGUMENTS
-int B_PLUS_TREE_LEAF_PAGE_TYPE::KeyIndex(const KeyType &key, const KeyComparator &comparator) const { 
-  for(int i = 0; i < GetSize(); ++i){
-    if(comparator(array[i].first, key) >= 0){
+int B_PLUS_TREE_LEAF_PAGE_TYPE::KeyIndex(const KeyType &key, const KeyComparator &comparator) const {
+  for (int i = 0; i < GetSize(); ++i) {
+    if (comparator(array[i].first, key) >= 0) {
       return i;
     }
   }
@@ -70,9 +66,7 @@ int B_PLUS_TREE_LEAF_PAGE_TYPE::KeyIndex(const KeyType &key, const KeyComparator
 INDEX_TEMPLATE_ARGUMENTS
 KeyType B_PLUS_TREE_LEAF_PAGE_TYPE::KeyAt(int index) const {
   // replace with your own code (fill in the curly braces with the appropriate key value)
-  KeyType key{
-    array[index].first
-  };
+  KeyType key{array[index].first};
   return key;
 }
 
@@ -96,11 +90,11 @@ const MappingType &B_PLUS_TREE_LEAF_PAGE_TYPE::GetItem(int index) {
 INDEX_TEMPLATE_ARGUMENTS
 bool B_PLUS_TREE_LEAF_PAGE_TYPE::Lookup(const KeyType &key, ValueType *value, const KeyComparator &comparator) const {
   int size = GetSize();
-  if(size == 0 || comparator(key, KeyAt(0)) < 0 || comparator(key, KeyAt(size-1)) > 0){
+  if (size == 0 || comparator(key, KeyAt(0)) < 0 || comparator(key, KeyAt(size - 1)) > 0) {
     return false;
   }
   int key_index = KeyIndex(key, comparator);
-  if(comparator(array[key_index].first, key) == 0){
+  if (comparator(array[key_index].first, key) == 0) {
     *value = array[key_index].second;
     return true;
   }
@@ -120,15 +114,16 @@ int B_PLUS_TREE_LEAF_PAGE_TYPE::Insert(const KeyType &key, const ValueType &valu
   int size = GetSize();
   MappingType new_pair = std::make_pair(key, value);
   // bigger than the last one
-  if (size == 0 || comparator(key, array[size-1].first) > 0){
+  if (size == 0 || comparator(key, array[size - 1].first) > 0) {
     array[size] = new_pair;
-  } else if (comparator(key, array[0].first) < 0){ // less than the first one
-    memmove(array + 1, array, static_cast<size_t>(GetSize()*sizeof(MappingType)));
+  } else if (comparator(key, array[0].first) < 0) {  // less than the first one
+    memmove(array + 1, array, static_cast<size_t>(GetSize() * sizeof(MappingType)));
     array[0] = new_pair;
-  } else { 
+  } else {
     // in the middle of array
     int new_index = KeyIndex(key, comparator);
-    memmove(array + new_index + 1, array + new_index, static_cast<size_t>((GetSize() - new_index) * sizeof(MappingType)));
+    memmove(array + new_index + 1, array + new_index,
+            static_cast<size_t>((GetSize() - new_index) * sizeof(MappingType)));
     array[new_index] = new_pair;
   }
   IncreaseSize(1);
@@ -145,7 +140,7 @@ int B_PLUS_TREE_LEAF_PAGE_TYPE::Insert(const KeyType &key, const ValueType &valu
  */
 INDEX_TEMPLATE_ARGUMENTS
 void B_PLUS_TREE_LEAF_PAGE_TYPE::MoveHalfTo(BPlusTreeLeafPage *recipient) {
-  int half = (GetSize() + 1)/2;
+  int half = (GetSize() + 1) / 2;
   recipient->CopyNFrom(array + GetSize() - half, half);
   IncreaseSize(-1 * half);
 }
@@ -170,9 +165,9 @@ void B_PLUS_TREE_LEAF_PAGE_TYPE::CopyNFrom(MappingType *items, int size) {
  * @return   page size after deletion
  */
 INDEX_TEMPLATE_ARGUMENTS
-int B_PLUS_TREE_LEAF_PAGE_TYPE::Remove(const KeyType &key, const KeyComparator &comparator) { 
+int B_PLUS_TREE_LEAF_PAGE_TYPE::Remove(const KeyType &key, const KeyComparator &comparator) {
   int size = GetSize();
-  if(size == 0 || comparator(key, KeyAt(0)) < 0 || comparator(key, KeyAt(size-1)) > 0){
+  if (size == 0 || comparator(key, KeyAt(0)) < 0 || comparator(key, KeyAt(size - 1)) > 0) {
     return size;
   }
 
@@ -205,8 +200,8 @@ void B_PLUS_TREE_LEAF_PAGE_TYPE::MoveAllTo(BPlusTreeLeafPage *recipient) {
  */
 INDEX_TEMPLATE_ARGUMENTS
 void B_PLUS_TREE_LEAF_PAGE_TYPE::CopyAllFrom(MappingType *items, int size) {
-    memcpy(array + GetSize(), items, size * sizeof(MappingType));
-    IncreaseSize(size);
+  memcpy(array + GetSize(), items, size * sizeof(MappingType));
+  IncreaseSize(size);
 }
 
 /*****************************************************************************
@@ -241,7 +236,7 @@ void B_PLUS_TREE_LEAF_PAGE_TYPE::CopyLastFrom(const MappingType &item) {
  */
 INDEX_TEMPLATE_ARGUMENTS
 void B_PLUS_TREE_LEAF_PAGE_TYPE::MoveLastToFrontOf(BPlusTreeLeafPage *recipient) {
-  recipient->CopyFirstFrom(array[GetSize()-1]);
+  recipient->CopyFirstFrom(array[GetSize() - 1]);
   IncreaseSize(-1);
 }
 

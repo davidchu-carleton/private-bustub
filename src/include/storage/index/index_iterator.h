@@ -23,7 +23,7 @@ INDEX_TEMPLATE_ARGUMENTS
 class IndexIterator {
  public:
   // you may define your own constructor based on your member variables
-  IndexIterator(page_id_t page_id, int index, BufferPoolManager* buffer_pool_manager);
+  IndexIterator(page_id_t page_id, int index, BufferPoolManager *buffer_pool_manager);
   ~IndexIterator();
 
   bool isEnd();
