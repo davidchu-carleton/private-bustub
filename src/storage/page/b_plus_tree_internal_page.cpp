@@ -127,10 +127,10 @@ int B_PLUS_TREE_INTERNAL_PAGE_TYPE::InsertNodeAfter(const ValueType &old_value, 
                                                     const ValueType &new_value) {
   int size = GetSize();
   int old_index = ValueIndex(old_value);
-  memmove(array + old_index + 2, array + old_index + 1, (size - old_index - 1) * sizeof(MappingType));
-  // for (int i = size + 1; i >= old_index + 2; i--) {
-  //   array[i] = array[i - 1];
-  // }
+  //memmove(array + old_index + 2, array + old_index + 1, (size - old_index - 1) * sizeof(MappingType));
+  for (int i = size + 1; i >= old_index + 2; i--) {
+    array[i] = array[i - 1];
+  }
   array[old_index + 1] = std::make_pair(new_key, new_value);
   IncreaseSize(1);
   return size + 1;
@@ -165,6 +165,9 @@ void B_PLUS_TREE_INTERNAL_PAGE_TYPE::MoveHalfTo(BPlusTreeInternalPage *recipient
 INDEX_TEMPLATE_ARGUMENTS
 void B_PLUS_TREE_INTERNAL_PAGE_TYPE::CopyNFrom(MappingType *items, int size, BufferPoolManager *buffer_pool_manager) {
   memcpy(array, items, size * sizeof(MappingType));
+  // for (int i = size + 1; i >= old_index + 2; i--) {
+  //   array[i] = array[i - 1];
+  // }
   for (int i = 0; i < size; i++) {
     auto child_page = buffer_pool_manager->FetchPage(array[i].second);
     auto child_node = reinterpret_cast<BPlusTreePage *>(child_page->GetData());
@@ -184,7 +187,11 @@ void B_PLUS_TREE_INTERNAL_PAGE_TYPE::CopyNFrom(MappingType *items, int size, Buf
  */
 INDEX_TEMPLATE_ARGUMENTS
 int B_PLUS_TREE_INTERNAL_PAGE_TYPE::Remove(int index) {
-  memmove(array + index, array + index + 1, (GetSize() - index - 1) * sizeof(MappingType));
+  //memmove(array + index, array + index + 1, (GetSize() - index - 1) * sizeof(MappingType));
+  int size = GetSize();
+  for (int i = index; i < size - 1; i++) {
+    array[i] = array[i + 1];
+  }
   IncreaseSize(-1);
   return GetSize();
 }
