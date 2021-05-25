@@ -56,11 +56,10 @@ bool BPLUSTREE_TYPE::GetValue(const KeyType &key, std::vector<ValueType> *result
     result->push_back(temp_value);
     buffer_pool_manager_->UnpinPage(leaf_page->GetPageId(), false);
     return true;
-  } 
+  }
   buffer_pool_manager_->UnpinPage(leaf_page->GetPageId(), false);
   return false;
 }
-
 
 /*****************************************************************************
  * INSERTION
@@ -117,8 +116,8 @@ bool BPLUSTREE_TYPE::InsertIntoLeaf(const KeyType &key, const ValueType &value, 
   if (leaf_node->Lookup(key, &temp_value, comparator_)) {
     buffer_pool_manager_->UnpinPage(leaf_page->GetPageId(), false);
     return false;
-  } 
-    
+  }
+
   leaf_node->Insert(key, value, comparator_);
   if (leaf_node->GetSize() > leaf_node->GetMaxSize()) {
     auto new_page_node = Split(leaf_node);
@@ -127,7 +126,6 @@ bool BPLUSTREE_TYPE::InsertIntoLeaf(const KeyType &key, const ValueType &value, 
   }
   buffer_pool_manager_->UnpinPage(leaf_page->GetPageId(), true);
   return true;
-
 }
 
 /*
@@ -154,7 +152,7 @@ BPlusTreePage *BPLUSTREE_TYPE::Split(BPlusTreePage *node) {
     leaf->SetNextPageId(new_leaf->GetPageId());
     leaf->MoveHalfTo(new_leaf);
     return new_leaf;
-  } 
+  }
   // internal page split
   InternalPage *internal = reinterpret_cast<InternalPage *>(node);
   InternalPage *new_internal = reinterpret_cast<InternalPage *>(new_node_page);
