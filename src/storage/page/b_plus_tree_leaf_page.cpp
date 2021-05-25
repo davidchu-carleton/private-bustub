@@ -117,7 +117,10 @@ int B_PLUS_TREE_LEAF_PAGE_TYPE::Insert(const KeyType &key, const ValueType &valu
   if (size == 0 || comparator(key, array[size - 1].first) > 0) {
     array[size] = new_pair;
   } else if (comparator(key, array[0].first) < 0) {  // less than the first one
-    memmove(array + 1, array, static_cast<size_t>(GetSize() * sizeof(MappingType)));
+    //memmove(array + 1, array, static_cast<size_t>(GetSize() * sizeof(MappingType)));
+    for (int i = size + 1; i >= 1; i--) {
+      array[i] = array[i - 1];
+    }
     array[0] = new_pair;
   } else {
     // in the middle of array
