@@ -128,7 +128,7 @@ int B_PLUS_TREE_INTERNAL_PAGE_TYPE::InsertNodeAfter(const ValueType &old_value, 
   int size = GetSize();
   int old_index = ValueIndex(old_value);
   //memmove(array + old_index + 2, array + old_index + 1, (size - old_index - 1) * sizeof(MappingType));
-  for (int i = size + 1; i >= old_index + 2; i++) {
+  for (int i = size + 1; i >= old_index + 2; i--) {
     array[i] = array[i - 1];
   }
   array[old_index + 1] = std::make_pair(new_key, new_value);
