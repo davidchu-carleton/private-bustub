@@ -125,8 +125,10 @@ int B_PLUS_TREE_LEAF_PAGE_TYPE::Insert(const KeyType &key, const ValueType &valu
   } else {
     // in the middle of array
     int new_index = KeyIndex(key, comparator);
-    memmove(array + new_index + 1, array + new_index,
-            static_cast<size_t>((GetSize() - new_index) * sizeof(MappingType)));
+    //memmove(array + new_index + 1, array + new_index, static_cast<size_t>((GetSize() - new_index) * sizeof(MappingType)));
+    for (int i = size + 1; i >= new_index + 1; i--) {
+      array[i] = array[i - 1];
+    }
     array[new_index] = new_pair;
   }
   IncreaseSize(1);
