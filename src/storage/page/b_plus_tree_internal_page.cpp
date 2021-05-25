@@ -164,10 +164,10 @@ void B_PLUS_TREE_INTERNAL_PAGE_TYPE::MoveHalfTo(BPlusTreeInternalPage *recipient
  */
 INDEX_TEMPLATE_ARGUMENTS
 void B_PLUS_TREE_INTERNAL_PAGE_TYPE::CopyNFrom(MappingType *items, int size, BufferPoolManager *buffer_pool_manager) {
-  memcpy(array, items, size * sizeof(MappingType));
-  // for (int i = size + 1; i >= old_index + 2; i--) {
-  //   array[i] = array[i - 1];
-  // }
+  //memcpy(array, items, size * sizeof(MappingType));
+  for (int i = 0; i < size; i++) {
+    array[i] = *(items + i);
+  }
   for (int i = 0; i < size; i++) {
     auto child_page = buffer_pool_manager->FetchPage(array[i].second);
     auto child_node = reinterpret_cast<BPlusTreePage *>(child_page->GetData());
