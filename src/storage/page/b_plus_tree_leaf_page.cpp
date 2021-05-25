@@ -221,7 +221,10 @@ void B_PLUS_TREE_LEAF_PAGE_TYPE::CopyAllFrom(MappingType *items, int size) {
 INDEX_TEMPLATE_ARGUMENTS
 void B_PLUS_TREE_LEAF_PAGE_TYPE::MoveFirstToEndOf(BPlusTreeLeafPage *recipient) {
   recipient->CopyLastFrom(array[0]);
-  memmove(array, array + 1, (GetSize() - 1) * sizeof(MappingType));
+  //memmove(array, array + 1, (GetSize() - 1) * sizeof(MappingType));
+  for (int i = 0; i < size - 1; i++) {
+      array[i] = array[i + 1];
+  }
   IncreaseSize(-1);
   // ask Aaron about buffer_poop_manager
   // auto *page = buffer_pool_manager->FetchPage(GetParentPageId());
