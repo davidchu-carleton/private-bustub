@@ -32,6 +32,7 @@
 #include "execution/expressions/column_value_expression.h"
 #include "execution/expressions/comparison_expression.h"
 #include "execution/expressions/constant_value_expression.h"
+#include "execution/plans/index_scan_plan.h"
 #include "execution/plans/seq_scan_plan.h"
 #include "gtest/gtest.h"
 #include "storage/b_plus_tree_test_util.h"  // NOLINT
@@ -47,7 +48,7 @@ class ExecutorTest : public ::testing::Test {
     ::testing::Test::SetUp();
     // For each test, we create a new DiskManager, BufferPoolManager, TransactionManager, and Catalog.
     disk_manager_ = std::make_unique<DiskManager>("executor_test.db");
-    bpm_ = std::make_unique<BufferPoolManager>(32, disk_manager_.get());
+    bpm_ = std::make_unique<BufferPoolManager>(100, disk_manager_.get());
     page_id_t page_id;
     bpm_->NewPage(&page_id);
     lock_manager_ = std::make_unique<LockManager>();
@@ -169,6 +170,42 @@ TEST_F(ExecutorTest, DISABLED_SimpleSeqScanTest) {
 }
 
 // NOLINTNEXTLINE
+TEST_F(ExecutorTest, DISABLED_SimpleIndexScanTest) {
+  // SELECT colA, colB FROM test_1 WHERE colA < 500
+
+  // Construct query plan
+  TableMetadata *table_info = GetExecutorContext()->GetCatalog()->GetTable("test_1");
+  Schema &schema = table_info->schema_;
+
+  Schema *key_schema = ParseCreateStatement("a integer");
+  GenericComparator<4> comparator(key_schema);
+  auto index_info = GetExecutorContext()->GetCatalog()->CreateIndex<GenericKey<4>, RID, GenericComparator<4>>(
+      GetTxn(), "index1", "test_1", table_info->schema_, *key_schema, {0}, 4);
+
+  auto *colA = MakeColumnValueExpression(schema, 0, "colA");
+  auto *colB = MakeColumnValueExpression(schema, 0, "colB");
+  auto *const500 = MakeConstantValueExpression(ValueFactory::GetIntegerValue(500));
+  auto *predicate = MakeComparisonExpression(colA, const500, ComparisonType::LessThan);
+  auto *out_schema = MakeOutputSchema({{"colA", colA}, {"colB", colB}});
+  IndexScanPlanNode plan{out_schema, predicate, index_info->index_oid_};
+
+  // Execute
+  std::vector<Tuple> result_set;
+  GetExecutionEngine()->Execute(&plan, &result_set, GetTxn(), GetExecutorContext());
+
+  // Verify
+  std::cout << "ColA, ColB" << std::endl;
+  for (const auto &tuple : result_set) {
+    ASSERT_TRUE(tuple.GetValue(out_schema, out_schema->GetColIdx("colA")).GetAs<int32_t>() < 500);
+    ASSERT_TRUE(tuple.GetValue(out_schema, out_schema->GetColIdx("colB")).GetAs<int32_t>() < 10);
+    std::cout << tuple.GetValue(out_schema, out_schema->GetColIdx("colA")).GetAs<int32_t>() << ", "
+              << tuple.GetValue(out_schema, out_schema->GetColIdx("colB")).GetAs<int32_t>() << std::endl;
+  }
+  ASSERT_EQ(result_set.size(), 500);
+  delete key_schema;
+}
+
+// NOLINTNEXTLINE
 TEST_F(ExecutorTest, DISABLED_SimpleRawInsertTest) {
   // INSERT INTO empty_table2 VALUES (100, 10), (101, 11), (102, 12)
   // Create Values to insert
@@ -277,9 +314,9 @@ TEST_F(ExecutorTest, DISABLED_SimpleRawInsertWithIndexTest) {
   auto table_info = GetExecutorContext()->GetCatalog()->GetTable("empty_table2");
   InsertPlanNode insert_plan{std::move(raw_vals), table_info->oid_};
 
-  Schema *key_schema = ParseCreateStatement("a bigint");
-  GenericComparator<8> comparator(key_schema);
-  auto index_info = GetExecutorContext()->GetCatalog()->CreateIndex<GenericKey<8>, RID, GenericComparator<8>>(
+  Schema *key_schema = ParseCreateStatement("a int");
+  GenericComparator<4> comparator(key_schema);
+  auto index_info = GetExecutorContext()->GetCatalog()->CreateIndex<GenericKey<4>, RID, GenericComparator<4>>(
       GetTxn(), "index1", "empty_table2", table_info->schema_, *key_schema, {0}, 8);
 
   GetExecutionEngine()->Execute(&insert_plan, nullptr, GetTxn(), GetExecutorContext());
@@ -336,7 +373,7 @@ TEST_F(ExecutorTest, DISABLED_SimpleRawInsertWithIndexTest) {
 }
 
 // NOLINTNEXTLINE
-TEST_F(ExecutorTest, DISABLED_SimpleDeleteTest) {
+TEST_F(ExecutorTest, DISABLED_DISABLED_SimpleDeleteTest) {
   // SELECT colA FROM test_1 WHERE colA == 50
   // DELETE FROM test_1 WHERE colA == 50
   // SELECT colA FROM test_1 WHERE colA == 50
@@ -350,11 +387,11 @@ TEST_F(ExecutorTest, DISABLED_SimpleDeleteTest) {
   auto out_schema1 = MakeOutputSchema({{"colA", colA}});
   auto scan_plan1 = std::make_unique<SeqScanPlanNode>(out_schema1, predicate, table_info->oid_);
   // index
-  Schema *key_schema = ParseCreateStatement("a bigint");
-  GenericComparator<8> comparator(key_schema);
-  auto index_info = GetExecutorContext()->GetCatalog()->CreateIndex<GenericKey<8>, RID, GenericComparator<8>>(
+  Schema *key_schema = ParseCreateStatement("a int");
+  GenericComparator<4> comparator(key_schema);
+  auto index_info = GetExecutorContext()->GetCatalog()->CreateIndex<GenericKey<4>, RID, GenericComparator<4>>(
       GetTxn(), "index1", "test_1", GetExecutorContext()->GetCatalog()->GetTable("test_1")->schema_, *key_schema, {0},
-      8);
+      4);
 
   // Execute
   std::vector<Tuple> result_set;

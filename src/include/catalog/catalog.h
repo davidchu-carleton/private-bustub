@@ -25,7 +25,7 @@ using index_oid_t = uint32_t;
  * Metadata about a table.
  */
 struct TableMetadata {
-  TableMetadata(Schema schema, std::string name, std::unique_ptr<TableHeap> &&table, table_oid_t oid)
+  TableMetadata(Schema schema, std::string name, std::unique_ptr<TableHeap> table, table_oid_t oid)
       : schema_(std::move(schema)), name_(std::move(name)), table_(std::move(table)), oid_(oid) {}
   Schema schema_;
   std::string name_;
@@ -37,7 +37,7 @@ struct TableMetadata {
  * Metadata about a index
  */
 struct IndexInfo {
-  IndexInfo(Schema key_schema, std::string name, std::unique_ptr<Index> &&index, index_oid_t index_oid,
+  IndexInfo(Schema key_schema, std::string name, std::unique_ptr<Index> index, index_oid_t index_oid,
             std::string table_name, size_t key_size)
       : key_schema_(std::move(key_schema)),
         name_(std::move(name)),
@@ -80,7 +80,7 @@ class Catalog {
     return nullptr;
   }
 
-  /** @return table metadata by name */
+  /** @return table metadata by name. Throw a std::out_of_range exception if no such table exists. */
   TableMetadata *GetTable(const std::string &table_name) { return nullptr; }
 
   /** @return table metadata by oid */
@@ -104,10 +104,13 @@ class Catalog {
     return nullptr;
   }
 
+  /** @return index info by name. Throw a std::out_of_range exception if no such index exists. */
   IndexInfo *GetIndex(const std::string &index_name, const std::string &table_name) { return nullptr; }
 
+  /** @return index metadata by oid */
   IndexInfo *GetIndex(index_oid_t index_oid) { return nullptr; }
 
+  /** @return a vector of index infos for a given table. */
   std::vector<IndexInfo *> GetTableIndexes(const std::string &table_name) { return std::vector<IndexInfo *>(); }
 
  private:

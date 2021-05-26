@@ -19,7 +19,7 @@ INDEX_TEMPLATE_ARGUMENTS
 BPLUSTREE_INDEX_TYPE::BPlusTreeIndex(IndexMetadata *metadata, BufferPoolManager *buffer_pool_manager)
     : Index(metadata),
       comparator_(metadata->GetKeySchema()),
-      container_(metadata->GetName(), buffer_pool_manager, comparator_) {}
+      container_(metadata->GetName(), buffer_pool_manager, comparator_, 100, 100) {}
 
 INDEX_TEMPLATE_ARGUMENTS
 void BPLUSTREE_INDEX_TYPE::InsertEntry(const Tuple &key, RID rid, Transaction *transaction) {
