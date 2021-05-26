@@ -88,16 +88,14 @@ class Catalog {
 
   /** @return table metadata by name. Throw a std::out_of_range exception if no such table exists. */
   TableMetadata *GetTable(const std::string &table_name) {
-    if (names_.count(table_name)) {
+    if (names_.count(table_name) != 0) {
       return GetTable(names_[table_name]);
     }
     throw std::out_of_range("Out of range!");
   }
 
   /** @return table metadata by oid */
-  TableMetadata *GetTable(table_oid_t table_oid) { 
-    return tables_[table_oid].get(); 
-  }
+  TableMetadata *GetTable(table_oid_t table_oid) { return tables_[table_oid].get(); }
 
   /**
    * Create a new index, populate existing data of the table and return its metadata.
