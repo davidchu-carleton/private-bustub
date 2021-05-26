@@ -79,20 +79,25 @@ class Catalog {
     BUSTUB_ASSERT(names_.count(table_name) == 0, "Table names should be unique!");
     TableHeap *new_table = new TableHeap(bpm_, lock_manager_, log_manager_, txn);
     TableMetadata *new_table_metadata =
-        new TableMetadata(schema, table_name, std::unique_ptr<TableHeap>(new_table), ++next_table_oid_);
+        new TableMetadata(schema, table_name, std::unique_ptr<TableHeap>(new_table), next_table_oid_);
+    names_[table_name] = next_table_oid_;
+    tables_[next_table_oid_] = std::unique_ptr<TableMetadata>(new_table_metadata);
+    next_table_oid_++;
     return new_table_metadata;
   }
 
   /** @return table metadata by name. Throw a std::out_of_range exception if no such table exists. */
   TableMetadata *GetTable(const std::string &table_name) {
-    if (names_.find(table_name) == names_.end()) {
-      throw std::out_of_range("Out of range!\n");
+    if (names_.count(table_name)) {
+      return GetTable(names_[table_name]);
     }
-    return GetTable(names_[table_name]);
+    throw std::out_of_range("Out of range!");
   }
 
   /** @return table metadata by oid */
-  TableMetadata *GetTable(table_oid_t table_oid) { return tables_[table_oid].get(); }
+  TableMetadata *GetTable(table_oid_t table_oid) { 
+    return tables_[table_oid].get(); 
+  }
 
   /**
    * Create a new index, populate existing data of the table and return its metadata.
