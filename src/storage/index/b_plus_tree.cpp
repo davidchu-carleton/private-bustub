@@ -17,14 +17,12 @@
 #include "common/rid.h"
 #include "common/logger.h"
 #include "storage/index/b_plus_tree.h"
+#include "storage/page/b_plus_tree_leaf_page.h"
 #include "storage/page/header_page.h"
-#include "common/logger.h"
-
-
 
 namespace bustub {
 INDEX_TEMPLATE_ARGUMENTS
-BPLUSTREE_TYPE::BPlusTree(std::string name, BufferPoolManager *buffer_pool_manager, const KeyComparator &comparator,
+BPLUSTREE_TYPE::BPlusTree(const std::string name, BufferPoolManager *buffer_pool_manager, const KeyComparator &comparator,
                           int leaf_max_size, int internal_max_size)
     : index_name_(std::move(name)),
       root_page_id_(INVALID_PAGE_ID),
@@ -53,15 +51,17 @@ bool BPLUSTREE_TYPE::GetValue(const KeyType &key, std::vector<ValueType> *result
   if(IsEmpty()) {
     return false;
   }
-  auto leaf_page = FindLeafPage(key, false);
+  auto leaf_page = FindLeafPage(key, false, transaction, Operation::SEARCH);
   auto leaf_node = reinterpret_cast<B_PLUS_TREE_LEAF_PAGE_TYPE *>(leaf_page->GetData());
   ValueType temp_value;
   if (leaf_node->Lookup(key, &temp_value, comparator_)){
     LOG_INFO("# sucessful");
     result->push_back(temp_value);
+    UnlockPage(leaf_page, transaction, Operation::SEARCH);
     return true;
   }else{
     LOG_INFO("# failed");
+    UnlockPage(leaf_page, transaction, Operation::SEARCH);
     return false;
   }
 }
@@ -79,7 +79,7 @@ bool BPLUSTREE_TYPE::GetValue(const KeyType &key, std::vector<ValueType> *result
 INDEX_TEMPLATE_ARGUMENTS
 bool BPLUSTREE_TYPE::Insert(const KeyType &key, const ValueType &value, Transaction *transaction) { 
   if(IsEmpty()){
-    StartNewTree(key, value);
+    StartNewTree(key, value, transaction);
     return true;
   }
   return InsertIntoLeaf(key, value, transaction);
@@ -92,16 +92,21 @@ bool BPLUSTREE_TYPE::Insert(const KeyType &key, const ValueType &value, Transact
  * tree's root page id and insert entry directly into leaf page.
  */
 INDEX_TEMPLATE_ARGUMENTS
-void BPLUSTREE_TYPE::StartNewTree(const KeyType &key, const ValueType &value) {
+void BPLUSTREE_TYPE::StartNewTree(const KeyType &key, const ValueType &value, Transaction* transaction) {
+  assert(IsEmpty());
   auto new_page = buffer_pool_manager_->NewPage(&root_page_id_);
   if(new_page == nullptr){
     throw std::bad_alloc();
   }
+  LockPage(new_page, transaction, Operation::INSERT);
   auto new_page_node = reinterpret_cast<B_PLUS_TREE_LEAF_PAGE_TYPE *>(new_page->GetData());
-  new_page_node->Init(root_page_id_, INVALID_PAGE_ID, leaf_max_size_);
-  new_page_node->Insert(key, value, comparator_);
   UpdateRootPageId(true);
+  new_page_node->Init(root_page_id_, INVALID_PAGE_ID, leaf_max_size_);
+  assert(!IsEmpty());
+  new_page_node->Insert(key, value, comparator_);
+  new_page->WUnlatch();
   buffer_pool_manager_->UnpinPage(new_page->GetPageId(), true);
+  transaction->GetPageSet()->pop_front();
 }
 
 /*
@@ -114,31 +119,44 @@ void BPLUSTREE_TYPE::StartNewTree(const KeyType &key, const ValueType &value) {
  */
 INDEX_TEMPLATE_ARGUMENTS
 bool BPLUSTREE_TYPE::InsertIntoLeaf(const KeyType &key, const ValueType &value, Transaction *transaction) {
-  auto leaf_page = FindLeafPage(key, false);
+  auto leaf_page = FindLeafPage(key, false, transaction, Operation::INSERT);
   auto leaf_node = reinterpret_cast<B_PLUS_TREE_LEAF_PAGE_TYPE *>(leaf_page->GetData());
   // check if key exists
   ValueType temp_value;
   if(leaf_node->Lookup(key, &temp_value, comparator_)){
+    UnlockParentPage(leaf_page, transaction, Operation::INSERT);
+    UnlockPage(leaf_page, transaction, Operation::INSERT);
     return false;
-  } else {
-    leaf_node->Insert(key, value, comparator_);
-    if(leaf_node->GetSize() > leaf_node->GetMaxSize()) {
-      // LOG_INFO("# This is max size: %d", leaf_node->GetMaxSize());
-      auto new_page_node = Split(leaf_node);
-      // if (new_page_node->IsLeafPage()) {
-      //   LOG_INFO("# This is insert into leaf - leaf");
-      //   LeafPage *leaf = reinterpret_cast<LeafPage *>(new_page_node);
-      //   InsertIntoParent(leaf_node, leaf->KeyAt(0), leaf, transaction);  
-      // } else {
-      //   LOG_INFO("# This is insert into leaf - internal");
-      //   InternalPage *internal = reinterpret_cast<InternalPage *>(new_page_node);
-      //   //LOG_INFO("Insert into leaf %" PRId64, internal->KeyAt(1).ToInt64());
-      //   InsertIntoParent(leaf_node, internal->KeyAt(1), internal, transaction);
-      // }
-      LeafPage *leaf = reinterpret_cast<LeafPage *>(new_page_node);
-      InsertIntoParent(leaf_node, leaf->KeyAt(0), leaf, transaction); 
+  }else{
+    if(leaf_node->GetSize() < leaf_node->GetMaxSize()){
+      leaf_node->Insert(key, value, comparator_);
+
+      UnlockPage(leaf_page, transaction, Operation::INSERT);
+      if(transaction != nullptr)
+        assert(transaction->GetPageSet()->empty());
+    }else{
+      auto new_leaf_node = reinterpret_cast<B_PLUS_TREE_LEAF_PAGE_TYPE *>(Split(leaf_node)); 
+      assert(new_leaf_node->IsLeafPage()); 
+      new_leaf_node->SetNextPageId(leaf_node->GetNextPageId());
+      leaf_node->SetNextPageId(new_leaf_node->GetPageId());
+      new_leaf_node->SetParentPageId(leaf_node->GetParentPageId());
+      KeyType middle_one = new_leaf_node->KeyAt(0);
+      
+      InsertIntoParent(leaf_node, middle_one, new_leaf_node, transaction);
+
+      // Split the right half to new node
+      if(comparator_(key, middle_one) < 0){
+          leaf_node->Insert(key, value, comparator_);
+      }else{
+          new_leaf_node->Insert(key, value, comparator_);
+      }
+      
+      UnlockParentPage(leaf_page, transaction, Operation::INSERT);
+      UnlockPage(leaf_page, transaction, Operation::INSERT);
+      if(transaction != nullptr)
+          assert(transaction->GetPageSet()->empty());
     }
-  return true;
+    return true;
   }
 }
 
@@ -190,35 +208,47 @@ INDEX_TEMPLATE_ARGUMENTS
 void BPLUSTREE_TYPE::InsertIntoParent(BPlusTreePage *old_node, const KeyType &key, BPlusTreePage *new_node,
                                       Transaction *transaction) {
     if (old_node->IsRootPage()) {
-      //LOG_INFO("# This is root split\n");
-      //LOG_INFO("Root add key %" PRId64, key.ToInt64());
       auto newPage = buffer_pool_manager_->NewPage(&root_page_id_);
+      if(newPage == nullptr){
+            throw std::bad_alloc();
+        }
+      newPage->WLatch();
+      transaction->GetPageSet()->push_front(newPage);
       InternalPage *newRoot = reinterpret_cast<InternalPage *>(newPage);
       newRoot->Init(root_page_id_, INVALID_PAGE_ID, internal_max_size_);
       newRoot->PopulateNewRoot(old_node->GetPageId(),key,new_node->GetPageId());
       old_node->SetParentPageId(root_page_id_);
       new_node->SetParentPageId(root_page_id_);
-      UpdateRootPageId();
+      UpdateRootPageId(false);
       //fetch page and new page need to unpin page
-      buffer_pool_manager_->UnpinPage(new_node->GetPageId(), true);
-      buffer_pool_manager_->UnpinPage(newRoot->GetPageId(), true);
+      //buffer_pool_manager_->UnpinPage(new_node->GetPageId(), true);
+      //buffer_pool_manager_->UnpinPage(newRoot->GetPageId(), true);
       return;
+    }else{
+      auto newPage = buffer_pool_manager_->FetchPage(old_node->GetParentPageId());
+      if(newPage==nullptr){
+          throw std::bad_alloc();
+      }
+      auto parent = reinterpret_cast<BPlusTreeInternalPage<KeyType, page_id_t, KeyComparator> *>(newPage->GetData());
+      if(parent->GetSize() < parent->GetMaxSize()){
+        parent->InsertNodeAfter(old_node->GetPageId(), key, new_node->GetPageId());
+      }else{
+        auto new_internal = reinterpret_cast<BPlusTreeInternalPage<KeyType, page_id_t, KeyComparator> *>(Split(parent));
+        new_internal->SetParentPageId(parent->GetParentPageId());
+        KeyType mid_one = new_internal->KeyAt(0);
+        if(comparator_(key, mid_one) < 0){
+          parent->InsertNodeAfter(old_node->GetPageId(), key, new_node->GetPageId());
+          new_node->SetParentPageId(parent->GetPageId());
+        }else{
+          new_internal->InsertNodeAfter(old_node->GetPageId(), key, new_node->GetPageId());
+          new_node->SetParentPageId(new_internal->GetPageId());
+        }
+        InsertIntoParent(parent, mid_one, new_internal, transaction);
+      }
+      buffer_pool_manager_->UnpinPage(parent->GetPageId(), true);
     }
-    page_id_t parentId = old_node->GetParentPageId();
-    auto *page = buffer_pool_manager_->FetchPage(parentId);
-    InternalPage *parent = reinterpret_cast<InternalPage *>(page);
-    new_node->SetParentPageId(parentId);
     buffer_pool_manager_->UnpinPage(new_node->GetPageId(), true);
-    //insert new node after old node
-    parent->InsertNodeAfter(old_node->GetPageId(), key, new_node->GetPageId());
-    if (parent->GetSize() > parent->GetMaxSize()) {
-      //LOG_INFO("# This is not root split\n");
-      auto *newParentPage = Split(parent); 
-      InternalPage *new_parent = reinterpret_cast<InternalPage *>(newParentPage);
-      InsertIntoParent(parent, new_parent->KeyAt(0), new_parent, transaction);
-    }
-    buffer_pool_manager_->UnpinPage(parentId, true);
-  }
+}
 
 /*****************************************************************************
  * REMOVE
@@ -377,6 +407,80 @@ Page *BPLUSTREE_TYPE::FindLeafPage(const KeyType &key, bool leftMost,
   }
   buffer_pool_manager_->UnpinPage(page->GetPageId(), false);
   return page;
+}
+
+INDEX_TEMPLATE_ARGUMENTS
+void BPLUSTREE_TYPE::LockPage(Page* page, Transaction* transaction, Operation op){
+    if(op == Operation::SEARCH){
+        page->RLatch();
+    }else{
+        page->WLatch();
+    }
+    if(transaction != nullptr)
+        transaction->GetPageSet()->push_back(page);
+}
+
+INDEX_TEMPLATE_ARGUMENTS
+void BPLUSTREE_TYPE::UnlockPage(Page* page, Transaction* transaction, Operation op){
+    if(page->GetPageId() == root_page_id_){
+        UnlockRoot();
+    }
+    if(op == Operation::SEARCH){
+        page->RUnlatch();
+        buffer_pool_manager_->UnpinPage(page->GetPageId(), false);
+    }else{
+        page->WUnlatch();
+        buffer_pool_manager_->UnpinPage(page->GetPageId(), true);
+    }
+    if(transaction != nullptr)
+        transaction->GetPageSet()->pop_front();
+}
+
+INDEX_TEMPLATE_ARGUMENTS
+void BPLUSTREE_TYPE::UnlockAllPage(Transaction* transaction, Operation op){
+    if(transaction == nullptr) return;
+    while(!transaction->GetPageSet()->empty()){
+        auto front = transaction->GetPageSet()->front();
+        if(front->GetPageId() != INVALID_PAGE_ID){
+            if(op == Operation::SEARCH){
+                front->RUnlatch();
+                buffer_pool_manager_->UnpinPage(front->GetPageId(), false);
+            }else{
+                if(front->GetPageId() == root_page_id_){
+                    UnlockRoot();
+                }
+                front->WUnlatch(); 
+                buffer_pool_manager_->UnpinPage(front->GetPageId(), true);
+            }
+        }
+        transaction->GetPageSet()->pop_front();
+    }
+}
+
+INDEX_TEMPLATE_ARGUMENTS
+void BPLUSTREE_TYPE::UnlockParentPage(Page* page, Transaction* transaction, Operation op){
+    if(transaction == nullptr) return;
+    if(transaction->GetPageSet()->empty()) return;
+    if(page->GetPageId() == INVALID_PAGE_ID){
+        UnlockAllPage(transaction, op);
+    }else{
+        while(!transaction->GetPageSet()->empty() && transaction->GetPageSet()->front()->GetPageId() != page->GetPageId()){
+            auto front = transaction->GetPageSet()->front();
+            if(front->GetPageId() != INVALID_PAGE_ID){
+                if(op == Operation::SEARCH){
+                    front->RUnlatch();
+                    buffer_pool_manager_->UnpinPage(front->GetPageId(), false);
+                }else{
+                    if(front->GetPageId() == root_page_id_){
+                        UnlockRoot();
+                    }
+                    front->WUnlatch(); 
+                    buffer_pool_manager_->UnpinPage(front->GetPageId(), true);
+                }
+            }
+            transaction->GetPageSet()->pop_front();
+        }
+    }
 }
 
 /*

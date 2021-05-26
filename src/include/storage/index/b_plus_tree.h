@@ -79,11 +79,16 @@ class BPlusTree {
   void RemoveFromFile(const std::string &file_name, Transaction *transaction = nullptr);
 
  private:
+  void LockPage(Page* page, Transaction* transaction, Operation op);
+  void UnlockPage(Page* page, Transaction* transaction, Operation op);
+  void UnlockParentPage(Page* page, Transaction* transaction, Operation op);
+  void UnlockAllPage(Transaction* transaction, Operation op);
+
   Page *FindLeafPage(const KeyType &key, bool leftMost = false, 
                     Transaction *transaction = nullptr,
                     Operation op = Operation::SEARCH);
 
-  void StartNewTree(const KeyType &key, const ValueType &value);
+  void StartNewTree(const KeyType &key, const ValueType &value, Transaction* transaction);
 
   bool InsertIntoLeaf(const KeyType &key, const ValueType &value, Transaction *transaction = nullptr);
 
@@ -102,6 +107,9 @@ class BPlusTree {
 
   void UpdateRootPageId(bool insert_record = false);
 
+  inline void LockRoot(){root_mutex_.lock();}
+  inline void UnlockRoot(){root_mutex_.unlock();}
+
   /* Debug Routines for FREE!! */
   void ToGraph(BPlusTreePage *page, BufferPoolManager *bpm, std::ofstream &out) const;
 
@@ -112,6 +120,7 @@ class BPlusTree {
   page_id_t root_page_id_;
   BufferPoolManager *buffer_pool_manager_;
   KeyComparator comparator_;
+  std::mutex root_mutex_; 
   int leaf_max_size_;
   int internal_max_size_;
 };
