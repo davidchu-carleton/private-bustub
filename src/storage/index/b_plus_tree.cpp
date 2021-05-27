@@ -78,9 +78,10 @@ bool BPLUSTREE_TYPE::GetValue(const KeyType &key, std::vector<ValueType> *result
  */
 INDEX_TEMPLATE_ARGUMENTS
 bool BPLUSTREE_TYPE::Insert(const KeyType &key, const ValueType &value, Transaction *transaction) { 
+  std::lock_guard<std::mutex> locker(root_mutex_);
   if(IsEmpty()){
-    StartNewTree(key, value, transaction);
-    return true;
+      StartNewTree(key, value, transaction);
+      return true;
   }
   return InsertIntoLeaf(key, value, transaction);
 }
@@ -132,8 +133,9 @@ bool BPLUSTREE_TYPE::InsertIntoLeaf(const KeyType &key, const ValueType &value, 
       leaf_node->Insert(key, value, comparator_);
 
       UnlockPage(leaf_page, transaction, Operation::INSERT);
-      if(transaction != nullptr)
+      if(transaction != nullptr){
         assert(transaction->GetPageSet()->empty());
+      }
     }else{
       auto new_leaf_node = reinterpret_cast<B_PLUS_TREE_LEAF_PAGE_TYPE *>(Split(leaf_node)); 
       assert(new_leaf_node->IsLeafPage()); 
@@ -162,7 +164,7 @@ bool BPLUSTREE_TYPE::InsertIntoLeaf(const KeyType &key, const ValueType &value, 
 
 /*
  * Split input page and return newly created page.
- * Using template N to represent either internal page or leaf page.
+ * Using template BPlusTreePage to represent either internal page or leaf page.
  * User needs to first ask for new page from buffer pool manager (NOTICE: throw
  * an std::bad_alloc exception if returned value is nullptr), then move half
  * of key & value pairs from input page to newly created page
@@ -174,7 +176,7 @@ BPlusTreePage *BPLUSTREE_TYPE::Split(BPlusTreePage *node) {
   if(new_page == nullptr){
      throw std::bad_alloc();
   }
-  //auto new_node = reinterpret_cast<N *>(new_page->GetData());
+  //auto new_node = reinterpret_cast<BPlusTreePage *>(new_page->GetData());
   BPlusTreePage *new_node_page = reinterpret_cast<BPlusTreePage *>(new_page->GetData());
   if (node->IsLeafPage()) {
     // leaf page split
@@ -265,22 +267,12 @@ void BPLUSTREE_TYPE::InsertIntoParent(BPlusTreePage *old_node, const KeyType &ke
  *                             This method should unlatch and delete before returning.
  */
 INDEX_TEMPLATE_ARGUMENTS
-void BPLUSTREE_TYPE::Remove(const KeyType &key, Transaction *transaction) {
-  if(IsEmpty()) {
-    return;
-  }
-  auto leaf_page = FindLeafPage(key, false);
-  auto leaf_node = reinterpret_cast<B_PLUS_TREE_LEAF_PAGE_TYPE *>(leaf_page->GetData());
-  //int old_size = leaf_node->GetSize();
-  //int new_size = 
-  leaf_node->Remove(key, comparator_);
-  
-}
+void BPLUSTREE_TYPE::Remove(const KeyType &key, Transaction *transaction) {}
 
 /*
  * You first need to find the sibling of input page. If sibling's size + input
  * page's size > page's max size, then redistribute. Otherwise, coalesce.
- * Using template N to represent either internal page or leaf page.
+ * Using template BPlusTreePage to represent either internal page or leaf page.
  * @param node                 the node that had a key removed
  * @param transaction          the current Transaction object, use to record pages for deletion
  */

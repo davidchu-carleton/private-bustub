@@ -10,6 +10,9 @@
 //===----------------------------------------------------------------------===//
 
 #include <sstream>
+#include <string>
+#include <iostream>
+#include <cinttypes>
 
 #include "common/exception.h"
 #include "common/rid.h"
