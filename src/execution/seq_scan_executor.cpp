@@ -34,7 +34,7 @@ bool SeqScanExecutor::Next(Tuple *tuple, RID *rid) {
   //     itr_++;
   //     return true;
   // }
-  while (plan_->GetPredicate() == nullptr ||
+  while (plan_->GetPredicate() != nullptr &&
          !plan_->GetPredicate()->Evaluate(&(*itr_), &meta_table_->schema_).GetAs<bool>()) {
     itr_++;
     if (itr_ == meta_table_->table_->End()) {  // no more tuples that satisfy the predicate
