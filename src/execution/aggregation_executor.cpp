@@ -40,8 +40,8 @@ void AggregationExecutor::Init() {
   this->aht_iterator_ = this->aht_.Begin();
 }
 
-bool AggregationExecutor::Next(Tuple *tuple, RID *rid) {  
-    while (this->aht_iterator_ != this->aht_.End()) {
+bool AggregationExecutor::Next(Tuple *tuple, RID *rid) {
+  while (this->aht_iterator_ != this->aht_.End()) {
     const auto &agg_key = this->aht_iterator_.Key();
     const auto &agg_val = this->aht_iterator_.Val();
     ++this->aht_iterator_;
