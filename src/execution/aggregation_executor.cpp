@@ -48,8 +48,9 @@ bool AggregationExecutor::Next(Tuple *tuple, RID *rid) {
         (this->plan_->GetHaving()->EvaluateAggregate(group_keys, agg_vals).GetAs<bool>())) {
       std::vector<Value> result;
       int count = plan_->OutputSchema()->GetColumnCount();
-      for (int i=0; i < count; i++) {
-        result.push_back(plan_->OutputSchema()->GetColumn(i).GetExpr()->EvaluateAggregate(group_keys, agg_vals));
+      result.reserve(count);
+      for (int i = 0; i < count; i++) {
+        result.emplace_back(plan_->OutputSchema()->GetColumn(i).GetExpr()->EvaluateAggregate(group_keys, agg_vals));
       }
       *tuple = Tuple(result, plan_->OutputSchema());
       ++aht_iterator_;
