@@ -251,7 +251,7 @@ TEST_F(ExecutorTest, DISABLED_SimpleRawInsertTest) {
 }
 
 // NOLINTNEXTLINE
-TEST_F(ExecutorTest, SimpleSelectInsertTest) {
+TEST_F(ExecutorTest, DISABLED_SimpleSelectInsertTest) {
   // INSERT INTO empty_table2 SELECT colA, colB FROM test_1 WHERE colA < 500
   std::unique_ptr<AbstractPlanNode> scan_plan1;
   const Schema *out_schema1;
@@ -473,7 +473,7 @@ TEST_F(ExecutorTest, DISABLED_SimpleNestedLoopJoinTest) {
 }
 
 // NOLINTNEXTLINE
-TEST_F(ExecutorTest, SimpleAggregationTest) {
+TEST_F(ExecutorTest, DISABLED_SimpleAggregationTest) {
   // SELECT COUNT(colA), SUM(colA), min(colA), max(colA) from test_1;
   std::unique_ptr<AbstractPlanNode> scan_plan;
   const Schema *scan_schema;
