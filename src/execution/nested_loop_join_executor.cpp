@@ -27,28 +27,32 @@ void NestedLoopJoinExecutor::Init() {
     RID left_rid = RID();
     Tuple right_tuple = Tuple();
     RID right_rid = RID();
+    //create a vector of right tuples 
+    std::vector<Tuple> right_tuple_vector;
+    while (right_exc_->Next(&right_tuple, &right_rid)) { 
+        right_tuple_vector.push_back(right_tuple);
+    }
     while (left_exc_->Next(&left_tuple, &left_rid)) {
-        while (right_exc_->Next(&right_tuple, &right_rid)) {
+        for (Tuple &right_tuple : right_tuple_vector) {
             bool predicate_check = plan_->Predicate()->EvaluateJoin(&left_tuple, left_exc_->GetOutputSchema(), 
                                                                     &right_tuple, right_exc_->GetOutputSchema()).GetAs<bool>();
-            if (predicate_check) {
-                break;
+            if (predicate_check) { //if there is a match
+                 //make a new Value vector by combining the values from left and right
+                uint32_t size_left = left_exc_->GetOutputSchema()->GetColumnCount();
+                uint32_t size_right = right_exc_->GetOutputSchema()->GetColumnCount();
+                std::vector<Value> value_vector;
+                for (uint32_t i = 0; i < size_left; i++) {
+                    Value left_value = left_tuple.GetValue(left_exc_->GetOutputSchema(), i); 
+                    value_vector.push_back(left_value);
+                }
+                for (uint32_t i = 0; i < size_right; i++) {
+                    Value right_value = right_tuple.GetValue(right_exc_->GetOutputSchema(), i); 
+                    value_vector.push_back(right_value);
+                }
+                Tuple combined_tuple = Tuple(value_vector, plan_->OutputSchema());
+                tuples_.push_back(combined_tuple);
             } 
         }
-        //make a new Value vector by combining the values from left and right
-        uint32_t size_left = left_exc_->GetOutputSchema()->GetColumnCount();
-        uint32_t size_right = right_exc_->GetOutputSchema()->GetColumnCount();
-        std::vector<Value> value_vector (size_left + size_right);
-        for (uint32_t i = 0; i < size_left; i++) {
-            Value left_value = left_tuple.GetValue(left_exc_->GetOutputSchema(), i); 
-            value_vector.push_back(left_value);
-        }
-        for (uint32_t i = 0; i < size_right; i++) {
-            Value right_value = right_tuple.GetValue(right_exc_->GetOutputSchema(), i); 
-            value_vector.push_back(right_value);
-        }
-        Tuple combined_tuple = Tuple(value_vector, plan_->GetLeftPlan()->OutputSchema());
-        tuples_.push_back(combined_tuple);
     }
 }
 

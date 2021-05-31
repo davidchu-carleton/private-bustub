@@ -52,6 +52,5 @@ class NestedLoopJoinExecutor : public AbstractExecutor {
   std::unique_ptr<AbstractExecutor> left_exc_;
   std::unique_ptr<AbstractExecutor> right_exc_;
   Catalog *catalog_;
-
 };
 }  // namespace bustub
