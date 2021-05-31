@@ -42,18 +42,20 @@ void AggregationExecutor::Init() {
 
 bool AggregationExecutor::Next(Tuple *tuple, RID *rid) {
   while (this->aht_iterator_ != this->aht_.End()) {
-    const auto &agg_key = this->aht_iterator_.Key();
-    const auto &agg_val = this->aht_iterator_.Val();
-    ++this->aht_iterator_;
+    auto group_keys = this->aht_iterator_.Key().group_bys_;
+    auto agg_vals = this->aht_iterator_.Val().aggregates_;
     if ((this->plan_->GetHaving() == nullptr) ||
-        (this->plan_->GetHaving()->EvaluateAggregate(agg_key.group_bys_, agg_val.aggregates_).GetAs<bool>())) {
+        (this->plan_->GetHaving()->EvaluateAggregate(group_keys, agg_vals).GetAs<bool>())) {
       std::vector<Value> result;
-      for (auto &column : this->GetOutputSchema()->GetColumns()) {
-        result.push_back(column.GetExpr()->EvaluateAggregate(agg_key.group_bys_, agg_val.aggregates_));
+      int count = plan_->OutputSchema()->GetColumnCount();
+      for (int i=0; i < count; i++) {
+        result.push_back(plan_->OutputSchema()->GetColumn(i).GetExpr()->EvaluateAggregate(group_keys, agg_vals));
       }
-      *tuple = Tuple(result, this->GetOutputSchema());
+      *tuple = Tuple(result, plan_->OutputSchema());
+      ++aht_iterator_;
       return true;
     }
+    ++this->aht_iterator_;
   }
   return false;
 }
