@@ -17,10 +17,51 @@ namespace bustub {
 NestedLoopJoinExecutor::NestedLoopJoinExecutor(ExecutorContext *exec_ctx, const NestedLoopJoinPlanNode *plan,
                                                std::unique_ptr<AbstractExecutor> &&left_executor,
                                                std::unique_ptr<AbstractExecutor> &&right_executor)
-    : AbstractExecutor(exec_ctx) {}
+    : AbstractExecutor(exec_ctx), plan_(plan), left_exc_(std::move(left_executor)), right_exc_(std::move(right_executor)) {
+        catalog_ = exec_ctx->GetCatalog();
+    }
 
-void NestedLoopJoinExecutor::Init() {}
+void NestedLoopJoinExecutor::Init() {
+    //get left and right tuple
+    Tuple left_tuple = Tuple();
+    RID left_rid = RID();
+    Tuple right_tuple = Tuple();
+    RID right_rid = RID();
+    while (left_exc_->Next(&left_tuple, &left_rid)) {
+        while (right_exc_->Next(&right_tuple, &right_rid)) {
+            bool predicate_check = plan_->Predicate()->EvaluateJoin(&left_tuple, left_exc_->GetOutputSchema(), 
+                                                                    &right_tuple, right_exc_->GetOutputSchema()).GetAs<bool>();
+            if (predicate_check) {
+                break;
+            } 
+        }
+        //make a new Value vector by combining the values from left and right
+        uint32_t size_left = left_exc_->GetOutputSchema()->GetColumnCount();
+        uint32_t size_right = right_exc_->GetOutputSchema()->GetColumnCount();
+        std::vector<Value> value_vector (size_left + size_right);
+        for (uint32_t i = 0; i < size_left; i++) {
+            Value left_value = left_tuple.GetValue(left_exc_->GetOutputSchema(), i); 
+            value_vector.push_back(left_value);
+        }
+        for (uint32_t i = 0; i < size_right; i++) {
+            Value right_value = right_tuple.GetValue(right_exc_->GetOutputSchema(), i); 
+            value_vector.push_back(right_value);
+        }
+        Tuple combined_tuple = Tuple(value_vector, plan_->GetLeftPlan()->OutputSchema());
+        tuples_.push_back(combined_tuple);
+    }
+}
 
-bool NestedLoopJoinExecutor::Next(Tuple *tuple, RID *rid) { return false; }
+bool NestedLoopJoinExecutor::Next(Tuple *tuple, RID *rid) { 
+    if (tuples_.size() == 0) {
+        return false;
+    }
+    //return the least recently added tuple
+    Tuple res = tuples_.front();
+    *tuple = res;
+    *rid = res.GetRid();
+    tuples_.erase(tuples_.begin());
+    return true;
+}
 
 }  // namespace bustub
